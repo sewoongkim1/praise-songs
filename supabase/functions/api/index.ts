@@ -202,6 +202,29 @@ Deno.serve(async (req) => {
         return json({ ok: true, updated });
       }
 
+      case "refreshViews": {
+        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        if (!YT_KEY) return json({ ok: false, error: "YOUTUBE_API_KEY 미설정" }, 500);
+        const ids: string[] = (Array.isArray(b.ids) ? b.ids : [])
+          .filter((x: string) => /^[a-zA-Z0-9_-]{11}$/.test(x)).slice(0, 50);
+        if (!ids.length) return json({ ok: true, updated: [], missing: [] });
+        // 한 번의 호출로 최대 50개 통계 조회
+        const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${ids.join(",")}&key=${YT_KEY}`;
+        const r = await fetch(url);
+        const j = await r.json();
+        if (j.error) throw new Error(j.error?.message || "YouTube API 오류");
+        const viewMap = new Map<string, number>();
+        for (const it of (j.items || [])) viewMap.set(it.id, +(it.statistics?.viewCount || 0));
+        const found = [...viewMap.keys()];
+        const missing = ids.filter((id) => !viewMap.has(id)); // 비공개/삭제
+        // 조회수만 병렬 업데이트(제목·구분 등 관리자 편집값은 보존)
+        await Promise.all(found.map((id) =>
+          db.from("songs").update({ views: viewMap.get(id) }).eq("id", id)
+        ));
+        const updated = found.map((id) => ({ id, views: viewMap.get(id) }));
+        return json({ ok: true, updated, missing });
+      }
+
       default:
         return json({ ok: false, error: "알 수 없는 action: " + action }, 400);
     }

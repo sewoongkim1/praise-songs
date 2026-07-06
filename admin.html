@@ -145,6 +145,11 @@
           <button class="ghost" onclick="loadList()">새로고침</button>
         </div>
       </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <button class="sec" id="refresh-views" onclick="refreshAllViews()">🔄 전체 곡 조회수 새로고침</button>
+        <span class="muted" style="font-size:12px">유튜브 최신 조회수를 전곡에 반영 (수 분 소요)</span>
+      </div>
+      <p id="refresh-msg" class="msg"></p>
       <div id="list" style="margin-top:10px"></div>
     </div>
 
@@ -153,8 +158,8 @@
     </p>
   </div>
 
-  <script src="js/config.js?v=20260707a"></script>
-  <script src="js/api.js?v=20260707a"></script>
+  <script src="js/config.js?v=20260707b"></script>
+  <script src="js/api.js?v=20260707b"></script>
   <script>
     let SECRET = "";
     let LIST = [];
@@ -280,6 +285,33 @@
         await loadList();
       } catch (e) { showMsg("ord-msg", "err", "저장 실패: " + e.message); }
       finally { btn.disabled = false; btn.textContent = t; }
+    }
+
+    // ----- 전체 곡 조회수 일괄 새로고침 (50개씩 배치) -----
+    async function refreshAllViews() {
+      const ids = LIST.map((s) => s.id).filter(Boolean);
+      if (!ids.length) return;
+      if (!confirm(`전체 ${ids.length.toLocaleString()}곡의 유튜브 조회수를 새로고침할까요?\n(수 분 걸릴 수 있어요)`)) return;
+      const btn = $("refresh-views"); btn.disabled = true; const t0 = btn.textContent; btn.textContent = "새로고침 중…";
+      const CH = 50; let done = 0, changed = 0; const missing = [];
+      const msg = $("refresh-msg"); msg.className = "msg ok";
+      try {
+        for (let i = 0; i < ids.length; i += CH) {
+          const chunk = ids.slice(i, i + CH);
+          try {
+            const res = await API.refreshViews(chunk, SECRET);
+            (res.updated || []).forEach((u) => {
+              const s = LIST.find((x) => x.id === u.id);
+              if (s) { if ((+s.views || 0) !== (+u.views || 0)) changed++; s.views = u.views; }
+            });
+            (res.missing || []).forEach((id) => missing.push(id));
+          } catch (e) { /* 이 배치만 건너뜀 */ }
+          done += chunk.length;
+          msg.textContent = `⏳ ${done.toLocaleString()}/${ids.length.toLocaleString()}곡 처리… (갱신 ${changed})`;
+        }
+        showMsg("refresh-msg", "ok", `✅ 완료: ${ids.length.toLocaleString()}곡 확인, ${changed}곡 조회수 갱신` + (missing.length ? `, ⚠️ 비공개/삭제 ${missing.length}곡` : ""));
+        renderList();
+      } finally { btn.disabled = false; btn.textContent = t0; }
     }
     function renderList() {
       const q = ($("search").value || "").trim().toLowerCase();
