@@ -103,12 +103,13 @@ button { font-family: inherit; cursor: pointer; }
 }
 .filter-row .sel:focus { outline: none; border-color: var(--navy); }
 /* 기간(From ~ To) */
-.period-row { display: flex; align-items: center; gap: 8px; }
+.period-row { display: flex; align-items: center; gap: 5px; }
 .period-row .date {
-  flex: 1; min-width: 0; padding: 9px 10px; font-size: 13.5px; font-weight: 600;
+  flex: 1; min-width: 0; padding: 9px 4px; font-size: 13px; font-weight: 600; text-align: center;
   border: 1.5px solid var(--line); border-radius: 10px;
   background: var(--card); color: var(--ink); font-family: inherit;
 }
+.period-row .date::-webkit-datetime-edit { text-align: center; }
 .period-row .date:focus { outline: none; border-color: var(--navy); }
 .period-row .tilde { color: var(--sub); font-weight: 700; flex: none; }
 .period-row .period-all {

@@ -149,7 +149,7 @@
         <input type="month" id="f-from" class="date" value="${state.from}" min="${mmin}" max="${mmax}" />
         <span class="tilde">~</span>
         <input type="month" id="f-to" class="date" value="${state.to}" min="${mmin}" max="${mmax}" />
-        <button id="f-allperiod" class="period-all">전체기간</button>
+        <button id="f-allperiod" class="period-all">전체</button>
       </div>
       <div class="filter-row">
         <select id="f-cat" class="sel">${catOpts}</select>
