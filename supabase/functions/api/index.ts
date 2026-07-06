@@ -113,6 +113,19 @@ Deno.serve(async (req) => {
         if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
         const s = b.song || {};
         if (!s.id) return json({ ok: false, error: "id 필요" }, 400);
+        // 순번 미지정 시 같은 구분/찬양대의 기존 순번을 상속(콤보 정렬 유지)
+        let catOrd = s.category_ordering ?? null;
+        let choirOrd = s.choir_ordering ?? null;
+        if (catOrd == null && s.category) {
+          const { data } = await db.from("songs").select("category_ordering")
+            .eq("category", s.category).not("category_ordering", "is", null).limit(1);
+          if (data && data[0]) catOrd = data[0].category_ordering;
+        }
+        if (choirOrd == null && s.choir) {
+          const { data } = await db.from("songs").select("choir_ordering")
+            .eq("choir", s.choir).not("choir_ordering", "is", null).limit(1);
+          if (data && data[0]) choirOrd = data[0].choir_ordering;
+        }
         const row = {
           id: s.id,
           song: s.song ?? "",
@@ -125,6 +138,8 @@ Deno.serve(async (req) => {
           thumbnail: s.thumbnail ?? null,
           is_full: !!s.is_full,
           hidden: !!s.hidden,
+          category_ordering: catOrd,
+          choir_ordering: choirOrd,
           updated_at: new Date().toISOString(),
         };
         const { error } = await db.from("songs").upsert(row);
@@ -154,6 +169,8 @@ Deno.serve(async (req) => {
           thumbnail: s.thumbnail ?? `https://i.ytimg.com/vi/${s.id}/hqdefault.jpg`,
           is_full: s.is_full ?? ((s.duration_sec ?? s.durationSec ?? 0) >= 1800),
           hidden: !!s.hidden,
+          category_ordering: s.category_ordering ?? null,
+          choir_ordering: s.choir_ordering ?? null,
         })).filter((r) => r.id);
         // 배치 upsert(500씩)
         let n = 0;

@@ -52,6 +52,8 @@
       views: r.views || 0,
       thumb: r.thumbnail || `https://i.ytimg.com/vi/${r.id}/hqdefault.jpg`,
       isFull: r.is_full ?? (sec >= 1800),
+      catOrder: r.category_ordering ?? 9999,
+      choirOrder: r.choir_ordering ?? 9999,
     };
   }
   function fmtDur(s) {
@@ -86,13 +88,20 @@
   }
 
   // ---------- 찬양대 목록(구분·탭에 연동) ----------
+  // 구분: category_ordering 순
+  function categoryOptions() {
+    const m = new Map();
+    ALL.forEach((s) => { if (s.category && !m.has(s.category)) m.set(s.category, s.catOrder); });
+    return [...m.entries()].sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], "ko")).map((e) => e[0]);
+  }
+  // 찬양대: choir_ordering 순(현재 선택 구분 내)
   function choirOptions() {
-    const set = new Set();
+    const m = new Map();
     ALL.forEach((s) => {
       if (state.cat !== "전체" && s.category !== state.cat) return;
-      if (s.choir) set.add(s.choir);
+      if (s.choir && !m.has(s.choir)) m.set(s.choir, s.choirOrder);
     });
-    return [...set].sort((a, b) => a.localeCompare(b, "ko"));
+    return [...m.entries()].sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], "ko")).map((e) => e[0]);
   }
   function dataDateRange() {
     let mn = "", mx = "";
@@ -134,8 +143,8 @@
     const choirs = choirOptions();
     if (state.choir !== "전체" && !choirs.includes(state.choir)) state.choir = "전체";
 
-    const catOpts = ["전체", ...CATEGORIES]
-      .map((c) => `<option value="${c}" ${state.cat===c?"selected":""}>${c==="전체"?"구분 전체":c}</option>`).join("");
+    const catOpts = ["전체", ...categoryOptions()]
+      .map((c) => `<option value="${esc(c)}" ${state.cat===c?"selected":""}>${c==="전체"?"구분 전체":esc(c)}</option>`).join("");
     const choirOpts = ["전체", ...choirs]
       .map((c) => `<option value="${esc(c)}" ${state.choir===c?"selected":""}>${c==="전체"?"전체":esc(c)}</option>`).join("");
     const [dmin, dmax] = dataDateRange();

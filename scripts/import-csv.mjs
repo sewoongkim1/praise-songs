@@ -64,6 +64,8 @@ const songs = rows.map((r) => {
     views: parseInt(o.views || "0", 10) || 0,
     is_full: bool(o.is_full),
     hidden: bool(o.hidden),
+    category_ordering: o.category_ordering != null && o.category_ordering !== "" ? parseInt(o.category_ordering, 10) : null,
+    choir_ordering: o.choir_ordering != null && o.choir_ordering !== "" ? parseInt(o.choir_ordering, 10) : null,
   };
 }).filter((s) => s.id);
 
