@@ -130,6 +130,7 @@
       return true;
     });
     VIEW.sort((a, b) => {
+      if (state.sort === "oldest") return (a.date || "").localeCompare(b.date || "");  // 오래된순
       if (state.sort === "popular") return b.views - a.views;
       if (state.sort === "name") return a.song.localeCompare(b.song, "ko");
       return (b.date || "").localeCompare(a.date || "");   // recent(기본)
@@ -182,6 +183,7 @@
          <button class="fav-toggle ${state.favOnly ? "on" : ""}" data-favonly>★ 즐겨찾기</button>
          <select id="sort" class="sel sort-sel">
            <option value="recent" ${state.sort==="recent"?"selected":""}>최신순</option>
+           <option value="oldest" ${state.sort==="oldest"?"selected":""}>오래된순</option>
            <option value="popular" ${state.sort==="popular"?"selected":""}>인기순</option>
            <option value="name" ${state.sort==="name"?"selected":""}>가나다순</option>
          </select>
