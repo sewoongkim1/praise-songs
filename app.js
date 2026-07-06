@@ -171,13 +171,14 @@
 
   // ---------- 바텀시트 ----------
   function showSheet(innerHTML, setup) {
-    let el = document.getElementById("sheet");
-    if (el) el.remove();
-    el = document.createElement("div"); el.id = "sheet";
+    document.querySelectorAll("#sheet").forEach((n) => n.remove()); // 잔여 시트 모두 제거(중복 방지)
+    const el = document.createElement("div"); el.id = "sheet";
     el.innerHTML = `<div class="sheet-bg"></div><div class="sheet-panel">${innerHTML}</div>`;
     document.body.appendChild(el);
-    requestAnimationFrame(() => el.classList.add("show"));
-    const close = () => { el.classList.remove("show"); setTimeout(() => el && el.remove(), 260); };
+    void el.querySelector(".sheet-panel").offsetHeight; // 강제 리플로우: 시작(내려간) 상태를 먼저 그리게 함
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
+    let closed = false;
+    const close = () => { if (closed) return; closed = true; el.classList.remove("show"); setTimeout(() => el.remove(), 300); };
     el.querySelector(".sheet-bg").onclick = close;
     setup(el, close);
   }
