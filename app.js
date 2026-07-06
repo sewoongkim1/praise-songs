@@ -166,7 +166,7 @@
       </div>
       <div class="filter-row">
         <button class="filter-btn" id="f-cat"><span>${state.cat === "전체" ? "구분 전체" : esc(state.cat)}</span></button>
-        <button class="filter-btn" id="f-choir"><span>${state.choir === "전체" ? "찬양대 전체" : esc(state.choir)}</span></button>
+        <button class="filter-btn" id="f-choir"><span>${state.choir === "전체" ? "전체" : esc(state.choir)}</span></button>
       </div>`;
 
     const qEl = $("#q");
@@ -177,7 +177,7 @@
     $("#f-cat").onclick = () => openSheet("구분 선택", [{ v: "전체", l: "구분 전체" }, ...categoryOptions().map((c) => ({ v: c, l: c }))], state.cat, (v) => {
       state.cat = v; state.choir = "전체"; renderControls(); apply();
     });
-    $("#f-choir").onclick = () => openSheet("찬양대 선택", [{ v: "전체", l: "찬양대 전체" }, ...choirOptions().map((c) => ({ v: c, l: c }))], state.choir, (v) => {
+    $("#f-choir").onclick = () => openSheet("찬양대 선택", [{ v: "전체", l: "전체" }, ...choirOptions().map((c) => ({ v: c, l: c }))], state.choir, (v) => {
       state.choir = v; renderControls(); apply();
     });
   }
