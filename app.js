@@ -302,7 +302,15 @@
   }
   function gotoPos(pos) {
     if (pos < 0 || pos >= playOrder.length) return;
-    orderPos = pos; curIdx = playOrder[pos]; loadCur();
+    orderPos = pos; curIdx = playOrder[pos]; loadCur(); updateNav();
+  }
+  // 이전/다음 버튼 활성/비활성 (반복이면 순환 가능하므로 항상 활성)
+  function updateNav() {
+    const rep = isOn("#pl-repeat");
+    const single = playOrder.length <= 1;
+    const prev = $("#pl-prev"), next = $("#pl-next");
+    if (prev) prev.disabled = single || (!rep && orderPos <= 0);
+    if (next) next.disabled = single || (!rep && orderPos >= playOrder.length - 1);
   }
 
   function openPlayer(i, queueArr) {
@@ -312,6 +320,7 @@
     $("#player-modal").hidden = false;
     document.body.style.overflow = "hidden";
     setMeta();
+    updateNav();
     reqWake();
 
     const startIt = () => {
@@ -331,13 +340,12 @@
   }
 
   function onEnded() {
-    if (!$("#pl-autonext").checked) return;   // 연속재생 꺼짐
+    // 곡 끝나면 자동으로 다음곡(연속재생 기본). 마지막이면 반복일 때만 처음으로
     if (orderPos + 1 < playOrder.length) { gotoPos(orderPos + 1); return; }
-    // 마지막 곡 → 반복이면 처음으로(셔플이면 새로 섞어서)
     if (isOn("#pl-repeat")) {
       if (isOn("#pl-shuffle")) buildOrder(playOrder[Math.floor(Math.random() * playOrder.length)]);
-      else orderPos = 0, curIdx = playOrder[0];
-      loadCur();
+      else { orderPos = 0; curIdx = playOrder[0]; }
+      loadCur(); updateNav();
     }
   }
   function closePlayer() {
@@ -361,10 +369,11 @@
     if (orderPos + 1 < playOrder.length) gotoPos(orderPos + 1);
     else if (isOn("#pl-repeat")) gotoPos(0);
   });
-  $("#pl-repeat").addEventListener("click", () => toggleBtn("#pl-repeat"));
+  $("#pl-repeat").addEventListener("click", () => { toggleBtn("#pl-repeat"); updateNav(); });
   $("#pl-shuffle").addEventListener("click", () => {
     toggleBtn("#pl-shuffle");
     if (activeQueue.length) buildOrder(curIdx);   // 현재 곡 유지하며 이후 순서 재구성
+    updateNav();
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#player-modal").hidden) closePlayer(); });
   document.addEventListener("visibilitychange", () => { if (!document.hidden && wakeLock === null && !$("#player-modal").hidden) reqWake(); });

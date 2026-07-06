@@ -193,9 +193,16 @@ html.dark .c-cat { background: rgba(255,255,255,.1); color: #a9c2ec; }
 .pl-nav { display: flex; gap: 10px; }
 .pl-btn {
   flex: 1; text-align: center;
-  padding: 11px 14px; font-size: 14px; font-weight: 700;
-  border: 1.5px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink);
+  padding: 13px 14px; font-size: 15px; font-weight: 800;
+  border: none; border-radius: 12px; cursor: pointer;
+  background: var(--navy); color: #fff;
+  box-shadow: 0 2px 8px rgba(26,58,107,.22);
+  transition: opacity .15s, transform .08s, background .15s;
 }
+.pl-btn:hover:not(:disabled) { opacity: .92; }
+.pl-btn:active:not(:disabled) { transform: scale(.98); }
+.pl-btn:disabled { background: var(--line); color: var(--sub); box-shadow: none; cursor: default; }
+html.dark .pl-btn:disabled { background: #2a3646; }
 .pl-auto { font-size: 13px; color: var(--sub); display: flex; align-items: center; gap: 5px; }
 .pl-auto input { width: 16px; height: 16px; accent-color: var(--navy); }
 .pl-tog {
