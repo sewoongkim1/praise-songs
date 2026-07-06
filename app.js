@@ -186,13 +186,30 @@
   function showSheet(innerHTML, setup) {
     document.querySelectorAll("#sheet").forEach((n) => n.remove()); // 잔여 시트 모두 제거(중복 방지)
     const el = document.createElement("div"); el.id = "sheet";
+    el.className = "show"; // CSS 트랜지션 대신 JS 애니메이션 사용(항상 열림상태 스타일)
     el.innerHTML = `<div class="sheet-bg"></div><div class="sheet-panel">${innerHTML}</div>`;
     document.body.appendChild(el);
-    void el.querySelector(".sheet-panel").offsetHeight; // 강제 리플로우: 시작(내려간) 상태를 먼저 그리게 함
-    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
+
+    const bg = el.querySelector(".sheet-bg");
+    const panel = el.querySelector(".sheet-panel");
+    const EASE = "cubic-bezier(.2,.8,.2,1)";
+    // WAAPI: 리플로우 타이밍에 의존하지 않아 재열기에도 항상 올라옴
+    if (panel.animate) {
+      bg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, fill: "both" });
+      panel.animate([{ transform: "translateY(100%)" }, { transform: "translateY(0)" }], { duration: 320, easing: EASE, fill: "both" });
+    }
+
     let closed = false;
-    const close = () => { if (closed) return; closed = true; el.classList.remove("show"); setTimeout(() => el.remove(), 300); };
-    el.querySelector(".sheet-bg").onclick = close;
+    const close = () => {
+      if (closed) return; closed = true;
+      const done = () => { if (el.parentNode) el.remove(); };
+      if (panel.animate) {
+        bg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: "both" });
+        const a = panel.animate([{ transform: "translateY(0)" }, { transform: "translateY(100%)" }], { duration: 260, easing: EASE, fill: "both" });
+        a.onfinish = done; setTimeout(done, 400); // 안전망
+      } else { done(); }
+    };
+    bg.onclick = close;
     setup(el, close);
   }
   // 목록 선택 시트(구분·찬양대·정렬)
