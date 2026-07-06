@@ -296,7 +296,7 @@
   function setMeta() {
     const s = activeQueue[curIdx]; if (!s) return;
     $("#pl-title").textContent = s.song;
-    $("#pl-sub").textContent = [s.choir, s.category, fmtDate(s.date)].filter(Boolean).join(" · ")
+    $("#pl-sub").textContent = [s.choir, fmtDate(s.date)].filter(Boolean).join(" · ")
       + (activeQueue.length > 1 ? `  ·  ${orderPos + 1}/${activeQueue.length}곡` : "");
     setMediaSession(s);
   }
