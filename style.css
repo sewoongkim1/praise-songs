@@ -19,6 +19,7 @@ html.dark {
   --shadow: 0 2px 12px rgba(0, 0, 0, .35);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { scrollbar-gutter: stable; }   /* 모달 열 때 스크롤바 사라져 팝업이 밀리는 것 방지 */
 body {
   font-family: "Noto Sans KR", system-ui, sans-serif;
   background: var(--bg); color: var(--ink);
