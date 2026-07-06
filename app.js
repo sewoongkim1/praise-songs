@@ -467,6 +467,7 @@
   function openPlayer(i, queueArr) {
     activeQueue = queueArr && queueArr.length ? queueArr : VIEW;
     if (i < 0 || i >= activeQueue.length) return;
+    try { if (window.API && API.logPlay) API.logPlay(activeQueue[i].id, visitorId()); } catch (e) {}
     buildOrder(i);
     // 스크롤바 폭 보정(모바일 오버레이 스크롤바는 0이라 무영향) — 팝업 가운데 유지
     const sbw = window.innerWidth - document.documentElement.clientWidth;
@@ -543,6 +544,22 @@
   // ---------- util ----------
   function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
+  // 익명 방문자 id(브라우저별) — 사용량 집계용
+  function visitorId() {
+    try {
+      let v = localStorage.getItem("praise_vid");
+      if (!v) { v = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem("praise_vid", v); }
+      return v;
+    } catch (e) { return "anon"; }
+  }
+  function logVisitOnce() {
+    try {
+      if (sessionStorage.getItem("praise_visited")) return;
+      sessionStorage.setItem("praise_visited", "1");
+      if (window.API && API.logVisit) API.logVisit(visitorId(), navigator.userAgent || "");
+    } catch (e) {}
+  }
+
   // ---------- 시작 ----------
   (async function init() {
     await load();
@@ -567,6 +584,7 @@
     renderControls();
     apply();
     if (window.hideSplash) window.hideSplash();
+    logVisitOnce();
 
     // 스크롤 위치 복원(그리드 렌더 후)
     if (saved && saved.scroll) {

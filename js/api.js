@@ -28,5 +28,9 @@
     importSongs: (songs, secret) => call("importSongs", { songs, secret }),
     setOrdering: (kind, items, secret) => call("setOrdering", { kind, items, secret }),
     refreshViews: (ids, secret) => call("refreshViews", { ids, secret }),
+    // 사용량 집계
+    logVisit: (visitor, ua) => call("logVisit", { visitor, ua }).catch(() => {}),
+    logPlay: (song_id, visitor) => call("logPlay", { song_id, visitor }).catch(() => {}),
+    usageStats: (secret) => call("usageStats", { secret }).then((j) => j.stats),
   };
 })();

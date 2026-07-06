@@ -225,6 +225,26 @@ Deno.serve(async (req) => {
         return json({ ok: true, updated, missing });
       }
 
+      // ---------- 사용량 집계 ----------
+      case "logVisit": {
+        const visitor = String(b.visitor || "").slice(0, 64);
+        const ua = String(b.ua || "").slice(0, 300);
+        await db.from("visits").insert({ visitor, ua });
+        return json({ ok: true });
+      }
+      case "logPlay": {
+        const song_id = String(b.song_id || "").slice(0, 20);
+        const visitor = String(b.visitor || "").slice(0, 64);
+        if (song_id) await db.from("plays").insert({ song_id, visitor });
+        return json({ ok: true });
+      }
+      case "usageStats": {
+        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        const { data, error } = await db.rpc("praise_usage_stats");
+        if (error) throw error;
+        return json({ ok: true, stats: data });
+      }
+
       default:
         return json({ ok: false, error: "알 수 없는 action: " + action }, 400);
     }
