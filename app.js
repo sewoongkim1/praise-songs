@@ -353,8 +353,11 @@
     activeQueue = queueArr && queueArr.length ? queueArr : VIEW;
     if (i < 0 || i >= activeQueue.length) return;
     buildOrder(i);
+    // 스크롤바 폭 보정(모바일 오버레이 스크롤바는 0이라 무영향) — 팝업 가운데 유지
+    const sbw = window.innerWidth - document.documentElement.clientWidth;
     $("#player-modal").hidden = false;
     document.body.style.overflow = "hidden";
+    if (sbw > 0) { document.body.style.paddingRight = sbw + "px"; $("#player-modal").style.paddingRight = sbw + "px"; }
     setMeta();
     updateNav();
     reqWake();
@@ -392,6 +395,8 @@
   function closePlayer() {
     $("#player-modal").hidden = true;
     document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+    $("#player-modal").style.paddingRight = "";
     try { ytPlayer && ytPlayer.stopVideo(); } catch (e) {}
     relWake();
   }
