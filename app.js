@@ -21,6 +21,18 @@
   const favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]"));
   const saveFavs = () => localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
 
+  // 마지막 화면 상태(앱 전환 후 재로딩돼도 그대로 복원)
+  const STATE_KEY = "praise_state";
+  function saveState() {
+    try {
+      localStorage.setItem(STATE_KEY, JSON.stringify({
+        q: state.q, cat: state.cat, choir: state.choir,
+        from: state.from, to: state.to, sort: state.sort, favOnly: state.favOnly,
+        scroll: window.scrollY || window.pageYOffset || 0,
+      }));
+    } catch (e) {}
+  }
+
   // 선택(여러 곡 담아 듣기) — 기본은 전체 선택, 해제한 곡만 deselected에 보관
   const deselected = new Set();
   const selectedList = () => VIEW.filter((s) => !deselected.has(s.id));
@@ -136,6 +148,7 @@
       return (b.date || "").localeCompare(a.date || "");   // recent(기본)
     });
     renderGrid();
+    saveState();
   }
 
   // ---------- 렌더: 컨트롤 ----------
@@ -516,12 +529,38 @@
   // ---------- 시작 ----------
   (async function init() {
     await load();
-    // 기본 기간 = 가장 최근 달(연·월)
-    let latest = "";
-    ALL.forEach((s) => { if ((s.date || "") > latest) latest = s.date; });
-    if (latest) { state.from = latest.slice(0, 7); state.to = latest.slice(0, 7); }
+
+    // 저장된 마지막 상태 복원(있으면) — 없으면 기본 기간 = 가장 최근 달
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch (e) {}
+    if (saved && typeof saved === "object") {
+      state.q = saved.q || "";
+      state.cat = saved.cat || "찬양대";
+      state.choir = saved.choir || "전체";
+      state.from = saved.from || "";
+      state.to = saved.to || "";
+      state.sort = saved.sort || "recent";
+      state.favOnly = !!saved.favOnly;
+    } else {
+      let latest = "";
+      ALL.forEach((s) => { if ((s.date || "") > latest) latest = s.date; });
+      if (latest) { state.from = latest.slice(0, 7); state.to = latest.slice(0, 7); }
+    }
+
     renderControls();
     apply();
     if (window.hideSplash) window.hideSplash();
+
+    // 스크롤 위치 복원(그리드 렌더 후)
+    if (saved && saved.scroll) {
+      requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, saved.scroll)));
+      setTimeout(() => window.scrollTo(0, saved.scroll), 300);
+    }
+
+    // 스크롤/백그라운드 전환 시 위치 저장
+    let st;
+    window.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(saveState, 250); }, { passive: true });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveState(); });
+    window.addEventListener("pagehide", saveState);
   })();
 })();
