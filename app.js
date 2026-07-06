@@ -21,9 +21,9 @@
   const favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]"));
   const saveFavs = () => localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
 
-  // 선택(여러 곡 담아 듣기)
-  const selected = new Set();
-  const selOrder = [];   // 선택 순서 유지
+  // 선택(여러 곡 담아 듣기) — 기본은 전체 선택, 해제한 곡만 deselected에 보관
+  const deselected = new Set();
+  const selectedList = () => VIEW.filter((s) => !deselected.has(s.id));
 
   // ---------- 초성 검색 ----------
   const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
@@ -174,14 +174,17 @@
 
   // ---------- 렌더: 그리드 ----------
   function renderGrid() {
-    $("#count").textContent = `${VIEW.length.toLocaleString()}곡`;
+    $("#count").innerHTML = `<span class="cnt-num">${VIEW.length.toLocaleString()}곡</span>` +
+      (VIEW.length ? `<button id="play-all" class="play-all">▶ 전체 듣기</button>` : "");
+    const pa = $("#play-all");
+    if (pa) pa.onclick = () => { if (VIEW.length) openPlayer(0, VIEW); };
     if (!VIEW.length) {
       $("#grid").innerHTML = `<p class="empty">${state.favOnly ? "즐겨찾기한 찬양이 없어요 ★" : "검색 결과가 없어요"}</p>`;
       renderSelBar();
       return;
     }
     $("#grid").innerHTML = VIEW.map((s, i) => `
-      <article class="card ${selected.has(s.id) ? "sel" : ""}" data-i="${i}" data-id="${s.id}">
+      <article class="card ${deselected.has(s.id) ? "unsel" : ""}" data-i="${i}" data-id="${s.id}">
         <div class="thumb">
           <img loading="lazy" src="${s.thumb}" alt="" onerror="this.src='https://i.ytimg.com/vi/${s.id}/hqdefault.jpg'" />
           <span class="play-ov">▶</span>
@@ -192,7 +195,7 @@
           <p class="c-meta"><span class="c-cat">${esc(s.category)}</span> · 조회 ${fmtViews(s.views)} · ⏱ ${s.duration}</p>
         </div>
         <div class="c-actions">
-          <input class="pick-cb" type="checkbox" data-pick="${s.id}" ${selected.has(s.id) ? "checked" : ""} title="선택해 담기" />
+          <input class="pick-cb" type="checkbox" data-pick="${s.id}" ${deselected.has(s.id) ? "" : "checked"} title="담기(기본 선택)" />
           <button class="star ${favs.has(s.id) ? "on" : ""}" data-fav="${s.id}" aria-label="즐겨찾기">${favs.has(s.id) ? "★" : "☆"}</button>
         </div>
       </article>`).join("");
@@ -213,37 +216,30 @@
         if (state.favOnly) apply();
       }));
     $("#grid").querySelectorAll("[data-pick]").forEach((cb) =>
-      cb.addEventListener("change", (e) => {
+      cb.addEventListener("change", () => {
         const id = cb.dataset.pick;
-        if (cb.checked) { if (!selected.has(id)) { selected.add(id); selOrder.push(id); } }
-        else { selected.delete(id); const k = selOrder.indexOf(id); if (k >= 0) selOrder.splice(k, 1); }
-        cb.closest(".card").classList.toggle("sel", cb.checked);
+        if (cb.checked) deselected.delete(id); else deselected.add(id);
+        cb.closest(".card").classList.toggle("unsel", !cb.checked);
         renderSelBar();
       }));
     renderSelBar();
   }
 
-  // ---------- 선택 바 ----------
+  // ---------- 선택 바 (일부만 해제했을 때 노출) ----------
   function renderSelBar() {
     let bar = $("#selbar");
-    if (!selected.size) { if (bar) bar.remove(); return; }
-    if (!bar) {
-      bar = document.createElement("div");
-      bar.id = "selbar";
-      document.body.appendChild(bar);
-    }
+    const sel = selectedList();
+    const anyDesel = VIEW.some((s) => deselected.has(s.id));
+    if (!anyDesel || !sel.length) { if (bar) bar.remove(); return; }
+    if (!bar) { bar = document.createElement("div"); bar.id = "selbar"; document.body.appendChild(bar); }
     bar.innerHTML = `
-      <span class="sb-count">🎵 ${selected.size}곡 선택</span>
+      <span class="sb-count">🎵 ${sel.length}곡 선택</span>
       <button class="sb-play" id="sb-play">▶ 선택한 곡 듣기</button>
-      <button class="sb-clear" id="sb-clear">해제</button>`;
-    $("#sb-play").onclick = () => {
-      const list = selOrder.map((id) => BYID[id]).filter(Boolean);
-      if (list.length) openPlayer(0, list);
-    };
+      <button class="sb-clear" id="sb-clear">모두 선택</button>`;
+    $("#sb-play").onclick = () => { if (sel.length) openPlayer(0, sel); };
     $("#sb-clear").onclick = () => {
-      selected.clear(); selOrder.length = 0;
-      document.querySelectorAll("[data-pick]").forEach((c) => { c.checked = false; c.closest(".card").classList.remove("sel"); });
-      renderSelBar();
+      VIEW.forEach((s) => deselected.delete(s.id));
+      renderGrid();
     };
   }
 
