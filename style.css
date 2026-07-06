@@ -128,6 +128,44 @@ html.dark .period-row .date::-webkit-calendar-picker-indicator { filter: invert(
 .count-line .cnt-right { display: flex; align-items: center; gap: 8px; }
 .count-line .sort-sel { flex: none; width: auto; min-width: 0; padding: 7px 12px; font-size: 12.5px; }
 .count-line .fav-toggle { padding: 7px 12px; font-size: 12.5px; }
+
+/* 필터 트리거 버튼(탭하면 바텀시트) */
+.filter-btn {
+  flex: 1; min-width: 0; padding: 11px 12px; font-size: 13.5px; font-weight: 600;
+  border: 1.5px solid var(--line); border-radius: 10px;
+  background: var(--card); color: var(--ink); cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+}
+.filter-btn > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filter-btn::after { content: "▾"; color: var(--sub); font-size: 11px; flex: none; }
+.period-row .filter-btn { padding: 10px 8px; font-size: 12.5px; }
+.count-line .sort-btn { flex: none; width: auto; padding: 7px 10px 7px 13px; font-size: 12.5px; }
+
+/* 바텀시트 */
+#sheet { position: fixed; inset: 0; z-index: 300; }
+#sheet .sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.4); opacity: 0; transition: opacity .25s; }
+#sheet.show .sheet-bg { opacity: 1; }
+#sheet .sheet-panel {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--card); border-radius: 20px 20px 0 0;
+  max-height: 72vh; display: flex; flex-direction: column;
+  transform: translateY(101%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+  box-shadow: 0 -10px 34px rgba(0,0,0,.3);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+#sheet.show .sheet-panel { transform: translateY(0); }
+.sheet-grip { width: 42px; height: 4px; border-radius: 3px; background: var(--line); margin: 10px auto 2px; }
+.sheet-title { text-align: center; font-weight: 800; font-size: 15.5px; padding: 8px 16px; color: var(--ink); border-bottom: 1px solid var(--line); }
+.sheet-list { overflow-y: auto; padding: 6px 10px 16px; -webkit-overflow-scrolling: touch; }
+.sheet-item {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 14px; font-size: 16px; font-weight: 600;
+  background: transparent; border: none; color: var(--ink); border-radius: 12px; cursor: pointer;
+}
+.sheet-item.on { background: rgba(26,58,107,.09); color: var(--navy); font-weight: 800; }
+.sheet-item .chk { color: var(--navy); font-weight: 800; }
+html.dark .sheet-item.on { background: rgba(255,255,255,.1); color: #a9c2ec; }
+html.dark .sheet-item.on .chk { color: #a9c2ec; }
 .play-all {
   background: var(--navy); color: #fff; border: none;
   padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;

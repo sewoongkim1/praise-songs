@@ -140,56 +140,92 @@
 
   // ---------- 렌더: 컨트롤 ----------
   function renderControls() {
-    // 찬양대 옵션(현재 구분/탭 기준). 현재 선택값이 목록에 없으면 전체로.
     const choirs = choirOptions();
     if (state.choir !== "전체" && !choirs.includes(state.choir)) state.choir = "전체";
-
-    const catOpts = ["전체", ...categoryOptions()]
-      .map((c) => `<option value="${esc(c)}" ${state.cat===c?"selected":""}>${c==="전체"?"구분 전체":esc(c)}</option>`).join("");
-    const choirOpts = ["전체", ...choirs]
-      .map((c) => `<option value="${esc(c)}" ${state.choir===c?"selected":""}>${c==="전체"?"전체":esc(c)}</option>`).join("");
-    const [dmin, dmax] = dataDateRange();
-    const mmin = dmin.slice(0, 7), mmax = dmax.slice(0, 7);
 
     $("#controls").innerHTML = `
       <div class="search-row">
         <input id="q" type="search" placeholder="곡명 검색 (초성 가능: ㅈㅇㄴ)" value="${esc(state.q)}" />
       </div>
       <div class="period-row">
-        <input type="month" id="f-from" class="date" value="${state.from}" min="${mmin}" max="${mmax}" />
+        <button class="filter-btn" id="f-from"><span>${esc(monthLabel(state.from) || "시작")}</span></button>
         <span class="tilde">~</span>
-        <input type="month" id="f-to" class="date" value="${state.to}" min="${mmin}" max="${mmax}" />
+        <button class="filter-btn" id="f-to"><span>${esc(monthLabel(state.to) || "종료")}</span></button>
         <button id="f-allperiod" class="period-all">전체</button>
       </div>
       <div class="filter-row">
-        <select id="f-cat" class="sel">${catOpts}</select>
-        <select id="f-choir" class="sel">${choirOpts}</select>
+        <button class="filter-btn" id="f-cat"><span>${state.cat === "전체" ? "구분 전체" : esc(state.cat)}</span></button>
+        <button class="filter-btn" id="f-choir"><span>${state.choir === "전체" ? "찬양대 전체" : esc(state.choir)}</span></button>
       </div>`;
 
     const qEl = $("#q");
     let t;
     qEl.addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; apply(); }, 200); });
-    $("#f-from").addEventListener("change", (e) => { state.from = e.target.value; apply(); });
-    $("#f-to").addEventListener("change", (e) => { state.to = e.target.value; apply(); });
-    $("#f-allperiod").addEventListener("click", () => { state.from = ""; state.to = ""; renderControls(); apply(); });
-    $("#f-cat").addEventListener("change", (e) => { state.cat = e.target.value; state.choir = "전체"; renderControls(); apply(); });
-    $("#f-choir").addEventListener("change", (e) => { state.choir = e.target.value; apply(); });
+    $("#f-from").onclick = () => openSheet("시작 (연·월)", monthItems(), state.from, (v) => {
+      state.from = v; if (state.to && v > state.to) state.to = v; renderControls(); apply();
+    });
+    $("#f-to").onclick = () => openSheet("종료 (연·월)", monthItems(), state.to, (v) => {
+      state.to = v; if (state.from && v < state.from) state.from = v; renderControls(); apply();
+    });
+    $("#f-allperiod").onclick = () => { state.from = ""; state.to = ""; renderControls(); apply(); };
+    $("#f-cat").onclick = () => openSheet("구분 선택", [{ v: "전체", l: "구분 전체" }, ...categoryOptions().map((c) => ({ v: c, l: c }))], state.cat, (v) => {
+      state.cat = v; state.choir = "전체"; renderControls(); apply();
+    });
+    $("#f-choir").onclick = () => openSheet("찬양대 선택", [{ v: "전체", l: "찬양대 전체" }, ...choirOptions().map((c) => ({ v: c, l: c }))], state.choir, (v) => {
+      state.choir = v; renderControls(); apply();
+    });
   }
+
+  // ---------- 바텀시트 ----------
+  function openSheet(title, items, current, onPick) {
+    let el = document.getElementById("sheet");
+    if (el) el.remove();
+    el = document.createElement("div");
+    el.id = "sheet";
+    el.innerHTML = `
+      <div class="sheet-bg"></div>
+      <div class="sheet-panel">
+        <div class="sheet-grip"></div>
+        <div class="sheet-title">${esc(title)}</div>
+        <div class="sheet-list">
+          ${items.map((it) => `<button class="sheet-item ${String(it.v) === String(current) ? "on" : ""}" data-v="${esc(String(it.v))}">
+            <span>${esc(it.l)}</span>${String(it.v) === String(current) ? '<span class="chk">✓</span>' : ""}
+          </button>`).join("")}
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("show"));
+    const close = () => { el.classList.remove("show"); setTimeout(() => el && el.remove(), 260); };
+    el.querySelector(".sheet-bg").onclick = close;
+    el.querySelectorAll(".sheet-item").forEach((b) => b.onclick = () => { close(); onPick(b.dataset.v); });
+    const cur = el.querySelector(".sheet-item.on"); if (cur) cur.scrollIntoView({ block: "center" });
+  }
+  function monthItems() {
+    const [dmin, dmax] = dataDateRange();
+    if (!dmin) return [];
+    const items = [];
+    let y = +dmax.slice(0, 4), m = +dmax.slice(5, 7);
+    const minKey = +dmin.slice(0, 4) * 12 + (+dmin.slice(5, 7) - 1);
+    while (y * 12 + (m - 1) >= minKey) {
+      items.push({ v: `${y}-${String(m).padStart(2, "0")}`, l: `${y}년 ${m}월` });
+      m--; if (m < 1) { m = 12; y--; }
+    }
+    return items;
+  }
+  function monthLabel(v) { return v ? `${+v.slice(0, 4)}년 ${+v.slice(5, 7)}월` : ""; }
+  function sortLabel(v) { return { recent: "최신순", oldest: "오래된순", popular: "인기순", name: "가나다순" }[v] || "최신순"; }
 
   // ---------- 렌더: 그리드 ----------
   function renderGrid() {
     $("#count").innerHTML = `<span class="cnt-num">${VIEW.length.toLocaleString()}곡</span>` +
       `<div class="cnt-right">
          <button class="fav-toggle ${state.favOnly ? "on" : ""}" data-favonly>★ 즐겨찾기</button>
-         <select id="sort" class="sel sort-sel">
-           <option value="recent" ${state.sort==="recent"?"selected":""}>최신순</option>
-           <option value="oldest" ${state.sort==="oldest"?"selected":""}>오래된순</option>
-           <option value="popular" ${state.sort==="popular"?"selected":""}>인기순</option>
-           <option value="name" ${state.sort==="name"?"selected":""}>가나다순</option>
-         </select>
+         <button class="filter-btn sort-btn" id="sort"><span>${sortLabel(state.sort)}</span></button>
        </div>`;
     const so = $("#sort");
-    if (so) so.addEventListener("change", (e) => { state.sort = e.target.value; apply(); });
+    if (so) so.onclick = () => openSheet("정렬", [
+      { v: "recent", l: "최신순" }, { v: "oldest", l: "오래된순" }, { v: "popular", l: "인기순" }, { v: "name", l: "가나다순" },
+    ], state.sort, (v) => { state.sort = v; apply(); });
     const fav = $("[data-favonly]");
     if (fav) fav.addEventListener("click", () => { state.favOnly = !state.favOnly; apply(); });
     if (!VIEW.length) {
