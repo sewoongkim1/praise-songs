@@ -10,7 +10,7 @@
   let VIEW = [];       // 현재 화면 목록
   const state = {
     q: "",
-    cat: "전체",
+    cat: "찬양대",     // 기본 구분 = 찬양대
     choir: "전체",
     from: "",          // "YYYY-MM-DD" (기본은 최근 달로 init에서 설정)
     to: "",            // "YYYY-MM-DD"
@@ -137,7 +137,7 @@
     const catOpts = ["전체", ...CATEGORIES]
       .map((c) => `<option value="${c}" ${state.cat===c?"selected":""}>${c==="전체"?"구분 전체":c}</option>`).join("");
     const choirOpts = ["전체", ...choirs]
-      .map((c) => `<option value="${esc(c)}" ${state.choir===c?"selected":""}>${c==="전체"?"찬양대 전체":esc(c)}</option>`).join("");
+      .map((c) => `<option value="${esc(c)}" ${state.choir===c?"selected":""}>${c==="전체"?"전체":esc(c)}</option>`).join("");
     const [dmin, dmax] = dataDateRange();
     const mmin = dmin.slice(0, 7), mmax = dmax.slice(0, 7);
 
