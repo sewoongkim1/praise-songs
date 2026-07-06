@@ -31,17 +31,22 @@ button { font-family: inherit; cursor: pointer; }
 #splash {
   position: fixed; inset: 0; z-index: 999;
   display: flex; align-items: center; justify-content: center;
-  background: #ffffff;
+  background: linear-gradient(160deg, var(--navy), var(--navy-d));
   transition: opacity .4s;
 }
 #splash.hide { opacity: 0; pointer-events: none; }
-.splash-inner { text-align: center; color: var(--navy); }
-#splash-logo { width: 96px; margin: 0 auto 18px; animation: pulse 2.4s ease-in-out infinite; }
+.splash-inner { text-align: center; color: #fff; }
+/* 로고만 흰 배경(액자) 위에 */
+#splash-logo {
+  box-sizing: content-box; width: 84px; height: auto; padding: 16px; margin: 0 auto 20px;
+  background: #fff; border-radius: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.28);
+  animation: pulse 2.4s ease-in-out infinite;
+}
 @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 @media (prefers-reduced-motion: reduce) { #splash-logo { animation: none; } }
-.splash-title { font-size: 20px; font-weight: 800; letter-spacing: .5px; color: var(--navy); }
-.splash-sub { margin-top: 8px; font-size: 13px; color: #6a7688; }
-.splash-ver { margin-top: 22px; font-size: 11px; color: #9aa5b4; }
+.splash-title { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
+.splash-sub { margin-top: 8px; font-size: 13px; opacity: .85; }
+.splash-ver { margin-top: 22px; font-size: 11px; opacity: .5; }
 
 /* ---------- 상단바 ---------- */
 .topbar {
