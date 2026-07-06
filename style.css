@@ -170,20 +170,26 @@ html.dark .sheet-item.on { background: rgba(255,255,255,.1); color: #a9c2ec; }
 html.dark .sheet-item.on .chk { color: #a9c2ec; }
 
 /* 기간 시트 */
-.sheet-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 14px 10px; }
-.psec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 2px 9px; }
+.sheet-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 4px 12px 10px; }
+.psec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 2px 9px; }
 .period-sheet .psec-label { font-size: 14.5px; font-weight: 800; color: var(--ink); }
+.ystep { display: flex; align-items: center; gap: 6px; flex: none; }
+.ybtn {
+  flex: none; width: 34px; height: 38px; font-size: 19px; font-weight: 800; line-height: 1;
+  border: 1.5px solid var(--line); border-radius: 9px; background: var(--card); color: var(--navy); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
 .psel {
-  flex: none; min-width: 116px; padding: 10px 34px 10px 14px; font-size: 14.5px; font-weight: 700;
+  flex: none; min-width: 90px; padding: 10px 30px 10px 12px; font-size: 14.5px; font-weight: 700;
   font-family: inherit; color: var(--ink); background-color: var(--card);
   border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; -webkit-appearance: none; appearance: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'/></svg>");
-  background-repeat: no-repeat; background-position: right 12px center;
+  background-repeat: no-repeat; background-position: right 10px center;
 }
 .psel:focus { outline: none; border-color: var(--navy); }
-.pchip-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.pchip-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px; }
 .pchip {
-  padding: 11px 2px; font-size: 13px; font-weight: 700; white-space: nowrap;
+  padding: 11px 0; font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden;
   border: 1.5px solid var(--line); border-radius: 9px; background: var(--card); color: var(--ink); cursor: pointer;
 }
 .pchip.on { background: var(--navy); color: #fff; border-color: var(--navy); }

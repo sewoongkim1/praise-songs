@@ -203,13 +203,19 @@
     const years = []; for (let y = +dmax.slice(0, 4); y >= +dmin.slice(0, 4); y--) years.push(y);
     let fy = +(state.from || dmin).slice(0, 4), fm = +(state.from || dmin).slice(5, 7);
     let ty = +(state.to || dmax).slice(0, 4), tm = +(state.to || dmax).slice(5, 7);
-    const yrSelect = (key, sel) => `<select class="psel" data-key="${key}">${years.map((y) => `<option value="${y}" ${y === sel ? "selected" : ""}>${y}년</option>`).join("")}</select>`;
+    const minY = +dmin.slice(0, 4), maxY = +dmax.slice(0, 4);
+    const yrStepper = (key, sel) => `
+      <div class="ystep" data-key="${key}">
+        <button class="ybtn" data-d="-1" aria-label="이전 년도">−</button>
+        <select class="psel" data-key="${key}">${years.map((y) => `<option value="${y}" ${y === sel ? "selected" : ""}>${y}년</option>`).join("")}</select>
+        <button class="ybtn" data-d="1" aria-label="다음 년도">＋</button>
+      </div>`;
     const moGrid = () => Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<button class="pchip mo" data-m="${m}">${m}월</button>`).join("");
     const section = (key) => `
       <div class="psec" data-key="${key}">
         <div class="psec-head">
           <span class="psec-label">${key === "from" ? "시작" : "종료"}</span>
-          ${yrSelect(key, key === "from" ? fy : ty)}
+          ${yrStepper(key, key === "from" ? fy : ty)}
         </div>
         <div class="pchip-grid">${moGrid()}</div>
       </div>`;
@@ -229,8 +235,14 @@
         q('.psec[data-key="from"] .mo').forEach((b) => b.classList.toggle("on", +b.dataset.m === fm));
         q('.psec[data-key="to"] .mo').forEach((b) => b.classList.toggle("on", +b.dataset.m === tm));
       };
+      const clampY = (y) => Math.max(minY, Math.min(maxY, y));
+      const setY = (key, y) => { y = clampY(y); if (key === "from") fy = y; else ty = y; el.querySelector(`.psel[data-key="${key}"]`).value = y; };
       el.querySelector('.psel[data-key="from"]').onchange = (e) => { fy = +e.target.value; };
       el.querySelector('.psel[data-key="to"]').onchange = (e) => { ty = +e.target.value; };
+      q(".ystep .ybtn").forEach((b) => b.onclick = () => {
+        const key = b.closest(".ystep").dataset.key;
+        setY(key, (key === "from" ? fy : ty) + (+b.dataset.d));
+      });
       q('.psec[data-key="from"] .mo').forEach((b) => b.onclick = () => { fm = +b.dataset.m; paint(); });
       q('.psec[data-key="to"] .mo').forEach((b) => b.onclick = () => { tm = +b.dataset.m; paint(); });
       paint();
