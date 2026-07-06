@@ -12,7 +12,6 @@
     q: "",
     cat: "전체",
     choir: "전체",
-    tab: "song",       // song | full
     sort: "recent",    // recent | popular | name
     favOnly: false,
   };
@@ -88,7 +87,6 @@
   function choirOptions() {
     const set = new Set();
     ALL.forEach((s) => {
-      if (state.tab === "full" ? !s.isFull : s.isFull) return;
       if (state.cat !== "전체" && s.category !== state.cat) return;
       if (s.choir) set.add(s.choir);
     });
@@ -100,7 +98,6 @@
     const q = state.q.trim();
     const cho = isChoOnly(q);
     VIEW = ALL.filter((s) => {
-      if (state.tab === "full" ? !s.isFull : s.isFull) return false;
       if (state.cat !== "전체" && s.category !== state.cat) return false;
       if (state.choir !== "전체" && s.choir !== state.choir) return false;
       if (state.favOnly && !favs.has(s.id)) return false;
@@ -134,11 +131,6 @@
       <div class="search-row">
         <input id="q" type="search" placeholder="곡명 검색 (초성 가능: ㅈㅇㄴ)" value="${esc(state.q)}" />
       </div>
-      <div class="tab-row">
-        <button class="tab ${state.tab === "song" ? "on" : ""}" data-tab="song">🎵 찬양</button>
-        <button class="tab ${state.tab === "full" ? "on" : ""}" data-tab="full">⛪ 전체예배</button>
-        <button class="fav-toggle ${state.favOnly ? "on" : ""}" data-favonly>★ 즐겨찾기</button>
-      </div>
       <div class="filter-row">
         <select id="f-cat" class="sel">${catOpts}</select>
         <select id="f-choir" class="sel">${choirOpts}</select>
@@ -147,6 +139,7 @@
           <option value="popular" ${state.sort==="popular"?"selected":""}>인기순</option>
           <option value="name" ${state.sort==="name"?"selected":""}>가나다순</option>
         </select>
+        <button class="fav-toggle ${state.favOnly ? "on" : ""}" data-favonly>★ 즐겨찾기</button>
       </div>`;
 
     const qEl = $("#q");
@@ -155,8 +148,6 @@
     $("#f-cat").addEventListener("change", (e) => { state.cat = e.target.value; state.choir = "전체"; renderControls(); apply(); });
     $("#f-choir").addEventListener("change", (e) => { state.choir = e.target.value; apply(); });
     $("#sort").addEventListener("change", (e) => { state.sort = e.target.value; apply(); });
-    $("#controls").querySelectorAll("[data-tab]").forEach((b) =>
-      b.addEventListener("click", () => { state.tab = b.dataset.tab; state.choir = "전체"; renderControls(); apply(); }));
     $("[data-favonly]").addEventListener("click", () => { state.favOnly = !state.favOnly; renderControls(); apply(); });
   }
 
