@@ -149,6 +149,7 @@
       </div>
       <div class="period-row">
         <button class="filter-btn period-btn" id="f-period"><span>📅 ${esc(periodLabel())}</span></button>
+        <button class="period-all ${(!state.from && !state.to) ? "on" : ""}" id="f-allperiod">전체</button>
       </div>
       <div class="filter-row">
         <button class="filter-btn" id="f-cat"><span>${state.cat === "전체" ? "구분 전체" : esc(state.cat)}</span></button>
@@ -159,6 +160,7 @@
     let t;
     qEl.addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; apply(); }, 200); });
     $("#f-period").onclick = openPeriodSheet;
+    $("#f-allperiod").onclick = () => { state.from = ""; state.to = ""; renderControls(); apply(); };
     $("#f-cat").onclick = () => openSheet("구분 선택", [{ v: "전체", l: "구분 전체" }, ...categoryOptions().map((c) => ({ v: c, l: c }))], state.cat, (v) => {
       state.cat = v; state.choir = "전체"; renderControls(); apply();
     });
@@ -201,12 +203,14 @@
     const years = []; for (let y = +dmax.slice(0, 4); y >= +dmin.slice(0, 4); y--) years.push(y);
     let fy = +(state.from || dmin).slice(0, 4), fm = +(state.from || dmin).slice(5, 7);
     let ty = +(state.to || dmax).slice(0, 4), tm = +(state.to || dmax).slice(5, 7);
-    const yrChips = () => years.map((y) => `<button class="pchip yr" data-y="${y}">${y}</button>`).join("");
+    const yrSelect = (key, sel) => `<select class="psel" data-key="${key}">${years.map((y) => `<option value="${y}" ${y === sel ? "selected" : ""}>${y}년</option>`).join("")}</select>`;
     const moGrid = () => Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<button class="pchip mo" data-m="${m}">${m}월</button>`).join("");
     const section = (key) => `
       <div class="psec" data-key="${key}">
-        <div class="psec-label">${key === "from" ? "시작" : "종료"}</div>
-        <div class="pchip-row">${yrChips()}</div>
+        <div class="psec-head">
+          <span class="psec-label">${key === "from" ? "시작" : "종료"}</span>
+          ${yrSelect(key, key === "from" ? fy : ty)}
+        </div>
         <div class="pchip-grid">${moGrid()}</div>
       </div>`;
     const inner = `
@@ -222,17 +226,14 @@
     showSheet(inner, (el, close) => {
       const q = (s) => el.querySelectorAll(s);
       const paint = () => {
-        q('.psec[data-key="from"] .yr').forEach((b) => b.classList.toggle("on", +b.dataset.y === fy));
         q('.psec[data-key="from"] .mo').forEach((b) => b.classList.toggle("on", +b.dataset.m === fm));
-        q('.psec[data-key="to"] .yr').forEach((b) => b.classList.toggle("on", +b.dataset.y === ty));
         q('.psec[data-key="to"] .mo').forEach((b) => b.classList.toggle("on", +b.dataset.m === tm));
       };
-      q('.psec[data-key="from"] .yr').forEach((b) => b.onclick = () => { fy = +b.dataset.y; paint(); });
+      el.querySelector('.psel[data-key="from"]').onchange = (e) => { fy = +e.target.value; };
+      el.querySelector('.psel[data-key="to"]').onchange = (e) => { ty = +e.target.value; };
       q('.psec[data-key="from"] .mo').forEach((b) => b.onclick = () => { fm = +b.dataset.m; paint(); });
-      q('.psec[data-key="to"] .yr').forEach((b) => b.onclick = () => { ty = +b.dataset.y; paint(); });
       q('.psec[data-key="to"] .mo').forEach((b) => b.onclick = () => { tm = +b.dataset.m; paint(); });
       paint();
-      q(".pchip-row").forEach((row) => { const on = row.querySelector(".yr.on"); if (on) on.scrollIntoView({ inline: "center", block: "nearest" }); });
       el.querySelector("#p-all").onclick = () => { state.from = ""; state.to = ""; close(); renderControls(); apply(); };
       el.querySelector("#p-apply").onclick = () => {
         let f = `${fy}-${String(fm).padStart(2, "0")}`, t = `${ty}-${String(tm).padStart(2, "0")}`;
