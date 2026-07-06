@@ -23,15 +23,18 @@
   <meta property="og:title" content="찬양 아카이브 | 오직 성경, 말씀이 답이다!" />
   <meta property="og:description" content="주의 말씀은 내 발에 등이요 내 길에 빛이니이다" />
   <meta property="og:image" content="https://worship.onlybible.kr/og-cover.png?v=2" />
+  <meta property="og:image:secure_url" content="https://worship.onlybible.kr/og-cover.png?v=2" />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="고척교회 찬양 아카이브" />
   <meta property="og:url" content="https://worship.onlybible.kr/" />
   <meta property="og:site_name" content="고척교회 찬양 아카이브" />
   <meta name="twitter:card" content="summary_large_image" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=20260707r" />
+  <link rel="stylesheet" href="style.css?v=20260707s" />
 </head>
 <body>
   <div id="splash">
@@ -39,7 +42,7 @@
       <img id="splash-logo" src="https://summer.onlybible.kr/logo3.png" alt="고척교회" />
       <div class="splash-title">고척교회 찬양 아카이브</div>
       <div class="splash-sub">오직 성경, 말씀이 답이다!</div>
-      <div class="splash-ver">v1.42</div>
+      <div class="splash-ver">v1.43</div>
     </div>
   </div>
   <script>
@@ -126,7 +129,7 @@
       var shareBtn = document.getElementById("share-btn");
       if (shareBtn) shareBtn.addEventListener("click", function () {
         var url = "https://worship.onlybible.kr/";
-        var data = { title: "고척교회 찬양 아카이브", text: "고척교회 예배 찬양 영상 아카이브 — 함께 찬양해요! 🎵", url: url };
+        var data = { title: "고척교회 찬양 아카이브", text: "함께 찬양해요! 🎵", url: url };
         if (navigator.share) {
           navigator.share(data).catch(function () {});
         } else if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -137,8 +140,8 @@
       });
     })();
   </script>
-  <script src="js/config.js?v=20260707r"></script>
-  <script src="js/api.js?v=20260707r"></script>
-  <script src="app.js?v=20260707r"></script>
+  <script src="js/config.js?v=20260707s"></script>
+  <script src="js/api.js?v=20260707s"></script>
+  <script src="app.js?v=20260707s"></script>
 </body>
 </html>
