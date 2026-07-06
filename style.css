@@ -175,18 +175,21 @@ html.dark .c-cat { background: rgba(255,255,255,.1); color: #a9c2ec; }
 .c-actions .star { background: transparent; border: none; font-size: 20px; line-height: 1; color: var(--sub); cursor: pointer; padding: 0; }
 .c-actions .star.on { color: var(--gold); }
 
-/* ---------- 플레이어 (딤 없는 전체화면 재생 화면) ---------- */
-.modal { position: fixed; inset: 0; z-index: 200; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* ---------- 플레이어 모달 ---------- */
+.modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; }
 .modal[hidden] { display: none; }
-.modal-bg { position: fixed; inset: 0; background: transparent; }   /* 빈 영역 클릭 시 닫기 */
-.modal-box { position: relative; z-index: 1; width: min(760px, 100%); margin: 0 auto; padding: 14px 12px 30px; }
+.modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,.72); }
+.modal-box {
+  position: relative; width: min(880px, 94vw); max-height: 92vh; overflow-y: auto;
+  background: var(--card); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.4);
+}
 .modal-x {
-  position: absolute; right: 20px; top: 20px; z-index: 3;
+  position: absolute; right: 10px; top: 10px; z-index: 2;
   background: rgba(0,0,0,.5); border: none; color: #fff;
-  width: 36px; height: 36px; border-radius: 50%; font-size: 16px;
+  width: 34px; height: 34px; border-radius: 50%; font-size: 15px;
 }
 /* 동영상 베이지 매트 액자 */
-.yt-wrap { background: #f1ead9; padding: 7px; border-radius: 14px; }
+.yt-wrap { background: #f1ead9; padding: 7px; border-radius: 16px 16px 0 0; }
 .yt-frame {
   position: relative; aspect-ratio: 16/9; background: #000;
   border-radius: 8px; overflow: hidden;
@@ -195,11 +198,11 @@ html.dark .c-cat { background: rgba(255,255,255,.1); color: #a9c2ec; }
 .yt-frame #yt-player, .yt-frame iframe {
   position: absolute; inset: 0; width: 100% !important; height: 100% !important; border: 0;
 }
-@media (max-width: 480px) { .yt-wrap { padding: 5px; } .modal-box { padding: 10px 8px 26px; } }
-.pl-meta { padding: 14px 6px 6px; }
+@media (max-width: 480px) { .yt-wrap { padding: 5px; } }
+.pl-meta { padding: 14px 18px 6px; }
 .pl-meta h3 { font-size: 17px; font-weight: 800; line-height: 1.4; }
 .pl-meta p { margin-top: 5px; font-size: 13px; color: var(--sub); }
-.pl-controls { display: flex; flex-direction: column; gap: 12px; padding: 14px 6px 20px; }
+.pl-controls { display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 20px; }
 .pl-toggles { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
 .pl-nav { display: flex; gap: 10px; }
 .pl-btn {
