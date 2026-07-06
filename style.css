@@ -120,6 +120,7 @@ button { font-family: inherit; cursor: pointer; }
 html.dark .period-row .date::-webkit-calendar-picker-indicator { filter: invert(1); }
 .count-line { margin: 14px 2px 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .count-line .cnt-num { font-size: 13px; color: var(--sub); font-weight: 600; }
+.count-line .sort-sel { flex: none; width: auto; min-width: 0; padding: 7px 12px; font-size: 12.5px; }
 .play-all {
   background: var(--navy); color: #fff; border: none;
   padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;
