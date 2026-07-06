@@ -202,11 +202,11 @@ html.dark .sheet-item.on .chk { color: #a9c2ec; }
 }
 
 /* ---------- 목록(가로형 카드) ---------- */
-.grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
-@media (min-width: 780px) { .grid { grid-template-columns: 1fr 1fr; } }
+.grid { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 780px) { .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .loading, .empty { grid-column: 1 / -1; text-align: center; padding: 50px 0; color: var(--sub); }
 .card {
-  display: flex; align-items: center; gap: 12px; padding: 8px;
+  display: flex; align-items: center; gap: 12px; padding: 8px; min-width: 0; max-width: 100%; overflow: hidden;
   background: var(--card); border-radius: 12px;
   box-shadow: var(--shadow); cursor: pointer;
   transition: transform .12s, box-shadow .12s;
