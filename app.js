@@ -262,6 +262,7 @@
   let playOrder = [];     // activeQueue 인덱스의 재생 순서
   let orderPos = -1;      // playOrder 내 현재 위치
   let curIdx = -1;        // activeQueue 내 현재 인덱스
+  let playing = false;    // 현재 재생 중 여부
 
   const isOn = (sel) => $(sel).getAttribute("aria-pressed") === "true";
   function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -297,6 +298,38 @@
     $("#pl-title").textContent = s.song;
     $("#pl-sub").textContent = [s.choir, s.category, fmtDate(s.date)].filter(Boolean).join(" · ")
       + (activeQueue.length > 1 ? `  ·  ${orderPos + 1}/${activeQueue.length}곡` : "");
+    setMediaSession(s);
+  }
+  // 잠금화면 미디어 정보 + 컨트롤(재생/일시정지/다음/이전)
+  function setMediaSession(s) {
+    if (!("mediaSession" in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: s.song || "찬양", artist: s.choir || "고척교회",
+        album: "고척교회 찬양 아카이브",
+        artwork: [{ src: s.thumb, sizes: "480x360", type: "image/jpeg" }],
+      });
+      navigator.mediaSession.setActionHandler("play", () => { try { ytPlayer && ytPlayer.playVideo(); } catch (e) {} });
+      navigator.mediaSession.setActionHandler("pause", () => { try { ytPlayer && ytPlayer.pauseVideo(); } catch (e) {} });
+      navigator.mediaSession.setActionHandler("nexttrack", goNext);
+      navigator.mediaSession.setActionHandler("previoustrack", goPrev);
+    } catch (e) {}
+  }
+  function goNext() {
+    if (orderPos + 1 < playOrder.length) gotoPos(orderPos + 1);
+    else if (isOn("#pl-repeat")) gotoPos(0);
+  }
+  function goPrev() {
+    if (orderPos - 1 >= 0) gotoPos(orderPos - 1);
+    else if (isOn("#pl-repeat")) gotoPos(playOrder.length - 1);
+  }
+  // 화면이 꺼질 때 재생을 이어가도록 시도(백그라운드 오디오 지원 기기용, 베스트-에포트)
+  function keepPlaying() {
+    let tries = 0;
+    const t = setInterval(() => {
+      try { if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo(); } catch (e) {}
+      if (++tries >= 8 || !document.hidden) clearInterval(t);
+    }, 350);
   }
   function loadCur() {
     const s = activeQueue[curIdx]; if (!s) return;
@@ -333,7 +366,12 @@
         videoId: vid,
         playerVars: { playsinline: 1, rel: 0, modestbranding: 1, autoplay: 1 },
         events: {
-          onStateChange: (e) => { if (e.data === YT.PlayerState.ENDED) onEnded(); },
+          onStateChange: (e) => {
+            if (e.data === YT.PlayerState.PLAYING) playing = true;
+            else if (e.data === YT.PlayerState.PAUSED) playing = false;
+            if ("mediaSession" in navigator) { try { navigator.mediaSession.playbackState = playing ? "playing" : "paused"; } catch (er) {} }
+            if (e.data === YT.PlayerState.ENDED) onEnded();
+          },
           onError: () => { onEnded(); },
         },
       });
@@ -364,14 +402,8 @@
   }
 
   $("#player-modal").querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", closePlayer));
-  $("#pl-prev").addEventListener("click", () => {
-    if (orderPos - 1 >= 0) gotoPos(orderPos - 1);
-    else if (isOn("#pl-repeat")) gotoPos(playOrder.length - 1);
-  });
-  $("#pl-next").addEventListener("click", () => {
-    if (orderPos + 1 < playOrder.length) gotoPos(orderPos + 1);
-    else if (isOn("#pl-repeat")) gotoPos(0);
-  });
+  $("#pl-prev").addEventListener("click", goPrev);
+  $("#pl-next").addEventListener("click", goNext);
   $("#pl-repeat").addEventListener("click", () => { toggleBtn("#pl-repeat"); updateNav(); });
   $("#pl-shuffle").addEventListener("click", () => {
     toggleBtn("#pl-shuffle");
@@ -379,7 +411,14 @@
     updateNav();
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#player-modal").hidden) closePlayer(); });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && wakeLock === null && !$("#player-modal").hidden) reqWake(); });
+  document.addEventListener("visibilitychange", () => {
+    const open = !$("#player-modal").hidden;
+    if (document.hidden) {
+      if (open && playing && ytPlayer) keepPlaying();   // 화면 꺼질 때 재생 유지 시도
+    } else {
+      if (open && wakeLock === null) reqWake();
+    }
+  });
 
   // ---------- util ----------
   function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
