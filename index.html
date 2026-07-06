@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <script>
+    (function () {
+      try { if (localStorage.getItem("theme") === "dark") document.documentElement.classList.add("dark"); } catch (e) {}
+    })();
+  </script>
+  <title>고척교회 찬양 아카이브</title>
+  <meta name="description" content="고척교회 주일 예배 찬양 영상 아카이브 — 10년의 찬양을 한 곳에서" />
+
+  <link rel="icon" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a3a6b" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="찬양아카이브" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="고척교회 찬양 아카이브" />
+  <meta property="og:description" content="10년의 주일 찬양 영상을 한 곳에서" />
+  <meta property="og:image" content="https://praise.onlybible.kr/og-cover.png" />
+  <meta property="og:url" content="https://praise.onlybible.kr/" />
+  <meta property="og:site_name" content="고척교회 찬양대" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=20260706a" />
+</head>
+<body>
+  <div id="splash">
+    <div class="splash-inner">
+      <img id="splash-logo" src="https://summer.onlybible.kr/logo3.png" alt="고척교회" />
+      <div class="splash-title">고척교회 찬양 아카이브</div>
+      <div class="splash-sub">10년의 찬양을 한 곳에서</div>
+      <div class="splash-ver">v1.00</div>
+    </div>
+  </div>
+  <script>
+    window.hideSplash = function () {
+      var s = document.getElementById("splash");
+      if (!s) return;
+      s.classList.add("hide");
+      setTimeout(function () { if (s && s.parentNode) s.parentNode.removeChild(s); }, 400);
+    };
+    setTimeout(window.hideSplash, 6000);
+  </script>
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="https://summer.onlybible.kr/logo3.png" alt="고척교회" />
+      <div class="brand-txt">
+        <b>찬양 아카이브</b>
+        <span>고척교회 · 주일 예배 찬양</span>
+      </div>
+    </div>
+    <button id="theme-toggle" class="icon-btn" aria-label="야간 모드">🌙</button>
+  </header>
+
+  <main id="app">
+    <div id="controls"></div>
+    <div id="count" class="count-line"></div>
+    <div id="grid" class="grid">
+      <p class="loading">불러오는 중…</p>
+    </div>
+  </main>
+
+  <div id="player-modal" class="modal" hidden>
+    <div class="modal-bg" data-close></div>
+    <div class="modal-box">
+      <button class="modal-x" data-close aria-label="닫기">✕</button>
+      <div class="yt-wrap"><div id="yt-player"></div></div>
+      <div class="pl-meta">
+        <h3 id="pl-title">—</h3>
+        <p id="pl-sub"></p>
+      </div>
+      <div class="pl-controls">
+        <button id="pl-prev" class="pl-btn">⏮ 이전</button>
+        <label class="pl-auto"><input type="checkbox" id="pl-autonext" checked /> 연속재생</label>
+        <button id="pl-next" class="pl-btn">다음 ⏭</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">고척교회 찬양대 · 주일 예배 찬양 아카이브</footer>
+
+  <script>
+    (function () {
+      var btn = document.getElementById("theme-toggle");
+      function sync() { btn.textContent = document.documentElement.classList.contains("dark") ? "☀️" : "🌙"; }
+      btn.addEventListener("click", function () {
+        var dark = document.documentElement.classList.toggle("dark");
+        try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch (e) {}
+        sync();
+      });
+      sync();
+    })();
+  </script>
+  <script src="js/config.js?v=20260706a"></script>
+  <script src="js/api.js?v=20260706a"></script>
+  <script src="app.js?v=20260706a"></script>
+</body>
+</html>

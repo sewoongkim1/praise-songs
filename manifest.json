@@ -1,0 +1,13 @@
+{
+  "name": "고척교회 찬양 아카이브",
+  "short_name": "찬양아카이브",
+  "description": "고척교회 주일 예배 찬양 영상 아카이브",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1a3a6b",
+  "theme_color": "#1a3a6b",
+  "icons": [
+    { "src": "favicon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
