@@ -37,6 +37,12 @@
     .gate { max-width:360px; margin:80px auto; text-align:center; }
     .tag { display:inline-block; padding:1px 7px; border-radius:9px; background:rgba(26,58,107,.1); color:var(--navy); font-size:11px; font-weight:700; }
     .hidden-badge { color:#c0392b; font-weight:700; }
+    .ord-list { margin-top:8px; border:1px solid var(--line); border-radius:10px; max-height:360px; overflow-y:auto; }
+    .ord-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--line); }
+    .ord-item:last-child { border-bottom:none; }
+    .ord-num { width:24px; text-align:center; font-weight:800; color:var(--navy); font-size:13px; flex:none; }
+    .ord-name { flex:1; min-width:0; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ord-item button.ghost { padding:5px 10px; flex:none; min-width:38px; }
   </style>
 </head>
 <body>
@@ -107,6 +113,29 @@
       <p id="save-msg" class="msg"></p>
     </div>
 
+    <!-- 콤보(구분·찬양대) 표시 순서 -->
+    <div class="card">
+      <b>콤보 표시 순서 (구분 · 찬양대/팀)</b>
+      <p class="muted" style="margin:4px 0 10px">기존 등록된 이름을 자동으로 불러옵니다. ▲▼로 순서를 바꾸고 <b>저장</b>하면 사용자 앱 콤보 순서에 즉시 반영됩니다.</p>
+      <div class="row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <label style="margin:0">구분</label>
+            <button class="sec" id="save-cat-ord" onclick="saveOrder('cat')">구분 순서 저장</button>
+          </div>
+          <div id="ord-cat" class="ord-list"></div>
+        </div>
+        <div style="flex:1;min-width:240px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <label style="margin:0">찬양대/팀</label>
+            <button class="sec" id="save-choir-ord" onclick="saveOrder('choir')">찬양대 순서 저장</button>
+          </div>
+          <div id="ord-choir" class="ord-list"></div>
+        </div>
+      </div>
+      <p id="ord-msg" class="msg"></p>
+    </div>
+
     <!-- 목록 -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -124,11 +153,12 @@
     </p>
   </div>
 
-  <script src="js/config.js?v=20260706a"></script>
-  <script src="js/api.js?v=20260706a"></script>
+  <script src="js/config.js?v=20260707a"></script>
+  <script src="js/api.js?v=20260707a"></script>
   <script>
     let SECRET = "";
     let LIST = [];
+    let CATORD = [], CHOIRORD = [];
     const $ = (id) => document.getElementById(id);
 
     function login() {
@@ -141,6 +171,7 @@
         $("main").style.display = "block";
         sessionStorage.setItem("padm", SECRET);
         renderList();
+        buildOrderLists();
       }).catch(() => {
         $("gate-msg").className = "msg err";
         $("gate-msg").textContent = "비밀번호가 틀렸습니다.";
@@ -207,7 +238,48 @@
     }
 
     async function loadList() {
-      try { LIST = await API.adminList(SECRET); renderList(); } catch (e) {}
+      try { LIST = await API.adminList(SECRET); renderList(); buildOrderLists(); } catch (e) {}
+    }
+
+    // ----- 콤보 순서 관리 -----
+    function buildOrderLists() {
+      const catMap = new Map(), choirMap = new Map();
+      LIST.forEach((s) => {
+        if (s.category) { const o = s.category_ordering ?? 9999; const c = catMap.get(s.category); if (c == null || o < c) catMap.set(s.category, o); }
+        if (s.choir) { const o = s.choir_ordering ?? 9999; const c = choirMap.get(s.choir); if (c == null || o < c) choirMap.set(s.choir, o); }
+      });
+      const toArr = (m) => [...m.entries()].map(([name, ord]) => ({ name, ord })).sort((a, b) => (a.ord - b.ord) || a.name.localeCompare(b.name, "ko"));
+      CATORD = toArr(catMap); CHOIRORD = toArr(choirMap);
+      renderOrder();
+    }
+    function renderOrder() {
+      const row = (kind, name, i, n) => `
+        <div class="ord-item">
+          <span class="ord-num">${i + 1}</span>
+          <span class="ord-name">${esc(name)}</span>
+          <button class="ghost" onclick="moveOrd('${kind}',${i},-1)" ${i === 0 ? "disabled" : ""}>▲</button>
+          <button class="ghost" onclick="moveOrd('${kind}',${i},1)" ${i === n - 1 ? "disabled" : ""}>▼</button>
+        </div>`;
+      $("ord-cat").innerHTML = CATORD.map((c, i) => row("cat", c.name, i, CATORD.length)).join("") || '<p class="muted" style="padding:10px">항목 없음</p>';
+      $("ord-choir").innerHTML = CHOIRORD.map((c, i) => row("choir", c.name, i, CHOIRORD.length)).join("") || '<p class="muted" style="padding:10px">항목 없음</p>';
+    }
+    function moveOrd(kind, i, dir) {
+      const arr = kind === "cat" ? CATORD : CHOIRORD;
+      const j = i + dir; if (j < 0 || j >= arr.length) return;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      renderOrder();
+    }
+    async function saveOrder(kind) {
+      const arr = kind === "cat" ? CATORD : CHOIRORD;
+      const items = arr.map((c, i) => ({ name: c.name, order: i + 1 }));
+      const btn = $(kind === "cat" ? "save-cat-ord" : "save-choir-ord"); const t = btn.textContent;
+      btn.disabled = true; btn.textContent = "저장 중…";
+      try {
+        await API.setOrdering(kind === "cat" ? "category" : "choir", items, SECRET);
+        showMsg("ord-msg", "ok", `✅ ${kind === "cat" ? "구분" : "찬양대/팀"} 순서 저장됨 (앱에 즉시 반영)`);
+        await loadList();
+      } catch (e) { showMsg("ord-msg", "err", "저장 실패: " + e.message); }
+      finally { btn.disabled = false; btn.textContent = t; }
     }
     function renderList() {
       const q = ($("search").value || "").trim().toLowerCase();

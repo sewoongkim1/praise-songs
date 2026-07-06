@@ -26,5 +26,6 @@
     saveSong: (song, secret) => call("saveSong", { song, secret }),
     deleteSong: (id, secret) => call("deleteSong", { id, secret }),
     importSongs: (songs, secret) => call("importSongs", { songs, secret }),
+    setOrdering: (kind, items, secret) => call("setOrdering", { kind, items, secret }),
   };
 })();

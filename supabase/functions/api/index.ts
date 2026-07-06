@@ -183,6 +183,25 @@ Deno.serve(async (req) => {
         return json({ ok: true, imported: n });
       }
 
+      case "setOrdering": {
+        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        const kind = b.kind === "choir" ? "choir" : "category";
+        const col = kind === "choir" ? "choir_ordering" : "category_ordering";
+        const items: any[] = Array.isArray(b.items) ? b.items : [];
+        if (!items.length) return json({ ok: false, error: "빈 목록" }, 400);
+        // 같은 이름을 가진 모든 곡을 같은 순번으로 일괄 업데이트 → 콤보 정렬 반영
+        let updated = 0;
+        for (const it of items) {
+          const name = it?.name;
+          const ord = Number(it?.order);
+          if (name == null || name === "" || !Number.isFinite(ord)) continue;
+          const { error } = await db.from("songs").update({ [col]: ord }).eq(kind, name);
+          if (error) throw error;
+          updated++;
+        }
+        return json({ ok: true, updated });
+      }
+
       default:
         return json({ ok: false, error: "알 수 없는 action: " + action }, 400);
     }
