@@ -104,60 +104,46 @@ button { font-family: inherit; cursor: pointer; }
 .filter-row .sel:focus { outline: none; border-color: var(--navy); }
 .count-line { margin: 14px 2px 8px; font-size: 13px; color: var(--sub); font-weight: 600; }
 
-/* ---------- 그리드 ---------- */
-.grid {
-  display: grid; gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-}
+/* ---------- 목록(가로형 카드) ---------- */
+.grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 780px) { .grid { grid-template-columns: 1fr 1fr; } }
 .loading, .empty { grid-column: 1 / -1; text-align: center; padding: 50px 0; color: var(--sub); }
 .card {
-  background: var(--card); border-radius: 14px; overflow: hidden;
+  display: flex; align-items: center; gap: 12px; padding: 8px;
+  background: var(--card); border-radius: 12px;
   box-shadow: var(--shadow); cursor: pointer;
-  transition: transform .15s, box-shadow .15s;
+  transition: transform .12s, box-shadow .12s;
 }
-.card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(26,58,107,.16); }
+.card:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,58,107,.14); }
 .card.sel { outline: 2.5px solid var(--gold); outline-offset: -2px; }
-/* 선택 체크박스(카드 우상단) */
-.pick {
-  position: absolute; right: 8px; top: 8px; z-index: 3;
-  width: 30px; height: 30px; border-radius: 8px;
-  background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
+/* 왼쪽 작은 썸네일 */
+.thumb {
+  position: relative; flex: none; width: clamp(104px, 32vw, 140px);
+  aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden;
 }
-.pick input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); }
-.card { position: relative; }
-.thumb { position: relative; aspect-ratio: 16/9; background: #000; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
-.dur {
-  position: absolute; right: 6px; bottom: 6px;
-  background: rgba(0,0,0,.8); color: #fff; font-size: 11px;
-  padding: 2px 6px; border-radius: 4px; font-weight: 600;
-}
-.star {
-  position: absolute; left: 6px; top: 6px;
-  background: rgba(0,0,0,.45); border: none; color: #fff;
-  width: 30px; height: 30px; border-radius: 50%; font-size: 15px; line-height: 1;
-}
-.star.on { color: var(--gold); }
 .play-ov {
-  position: absolute; inset: 0; margin: auto; width: 50px; height: 50px;
+  position: absolute; inset: 0; margin: auto; width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;
   background: rgba(26,58,107,.82); color: #fff; border-radius: 50%;
-  font-size: 20px; opacity: 0; transition: opacity .15s;
+  font-size: 16px; opacity: 0; transition: opacity .15s;
 }
 .card:hover .play-ov { opacity: 1; }
-.c-body { padding: 10px 12px 12px; }
-.c-title {
-  font-size: 14.5px; font-weight: 700; line-height: 1.35;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-.c-sub { margin-top: 4px; font-size: 12px; color: var(--sub); }
-.c-meta { margin-top: 3px; font-size: 11.5px; color: var(--sub); }
+/* 텍스트 3줄 */
+.c-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.c-title { font-size: 15px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-sub { font-size: 12.5px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-meta { font-size: 11.5px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .c-cat {
   display: inline-block; padding: 1px 7px; border-radius: 10px;
   background: rgba(26,58,107,.1); color: var(--navy); font-weight: 700; font-size: 11px;
 }
 html.dark .c-cat { background: rgba(255,255,255,.1); color: #a9c2ec; }
+/* 오른쪽 액션(선택 체크 + 즐겨찾기) */
+.c-actions { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 0 2px; }
+.c-actions .pick-cb { width: 20px; height: 20px; cursor: pointer; accent-color: var(--gold); }
+.c-actions .star { background: transparent; border: none; font-size: 20px; line-height: 1; color: var(--sub); cursor: pointer; padding: 0; }
+.c-actions .star.on { color: var(--gold); }
 
 /* ---------- 플레이어 모달 ---------- */
 .modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; }
