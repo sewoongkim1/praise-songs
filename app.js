@@ -225,22 +225,20 @@
     renderSelBar();
   }
 
-  // ---------- 선택 바 (일부만 해제했을 때 노출) ----------
+  // ---------- 선택 바 (상시 노출: 체크된 곡만 재생) ----------
   function renderSelBar() {
     let bar = $("#selbar");
     const sel = selectedList();
-    const anyDesel = VIEW.some((s) => deselected.has(s.id));
-    if (!anyDesel || !sel.length) { if (bar) bar.remove(); return; }
+    if (!sel.length) { if (bar) bar.remove(); return; }   // 전부 해제했을 때만 숨김
     if (!bar) { bar = document.createElement("div"); bar.id = "selbar"; document.body.appendChild(bar); }
+    const anyDesel = VIEW.some((s) => deselected.has(s.id));
     bar.innerHTML = `
-      <span class="sb-count">🎵 ${sel.length}곡 선택</span>
-      <button class="sb-play" id="sb-play">▶ 선택한 곡 듣기</button>
-      <button class="sb-clear" id="sb-clear">모두 선택</button>`;
+      <span class="sb-count">☑ ${sel.length}곡</span>
+      <button class="sb-play" id="sb-play">▶ 선택 듣기</button>
+      ${anyDesel ? '<button class="sb-clear" id="sb-clear">모두 선택</button>' : ""}`;
     $("#sb-play").onclick = () => { if (sel.length) openPlayer(0, sel); };
-    $("#sb-clear").onclick = () => {
-      VIEW.forEach((s) => deselected.delete(s.id));
-      renderGrid();
-    };
+    const clr = $("#sb-clear");
+    if (clr) clr.onclick = () => { VIEW.forEach((s) => deselected.delete(s.id)); renderGrid(); };
   }
 
   // ---------- 플레이어 (YouTube IFrame API) ----------
