@@ -31,17 +31,17 @@ button { font-family: inherit; cursor: pointer; }
 #splash {
   position: fixed; inset: 0; z-index: 999;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(160deg, var(--navy), var(--navy-d));
+  background: #ffffff;
   transition: opacity .4s;
 }
 #splash.hide { opacity: 0; pointer-events: none; }
-.splash-inner { text-align: center; color: #fff; }
+.splash-inner { text-align: center; color: var(--navy); }
 #splash-logo { width: 96px; margin: 0 auto 18px; animation: pulse 2.4s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 @media (prefers-reduced-motion: reduce) { #splash-logo { animation: none; } }
-.splash-title { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
-.splash-sub { margin-top: 8px; font-size: 13px; opacity: .8; }
-.splash-ver { margin-top: 22px; font-size: 11px; opacity: .5; }
+.splash-title { font-size: 20px; font-weight: 800; letter-spacing: .5px; color: var(--navy); }
+.splash-sub { margin-top: 8px; font-size: 13px; color: #6a7688; }
+.splash-ver { margin-top: 22px; font-size: 11px; color: #9aa5b4; }
 
 /* ---------- 상단바 ---------- */
 .topbar {
@@ -186,7 +186,7 @@ html.dark .c-cat { background: rgba(255,255,255,.1); color: #a9c2ec; }
 .yt-frame {
   position: relative; aspect-ratio: 16/9; background: #000;
   border-radius: 10px; overflow: hidden;
-  box-shadow: 0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.07);
+  box-shadow: 0 8px 22px rgba(0,0,0,.5), inset 0 0 0 0.5px rgba(255,255,255,.55);
 }
 .yt-frame #yt-player, .yt-frame iframe {
   position: absolute; inset: 0; width: 100% !important; height: 100% !important; border: 0;
