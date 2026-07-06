@@ -12,8 +12,8 @@
     q: "",
     cat: "전체",
     choir: "전체",
-    year: "전체",      // "전체" | "YYYY"  (기본은 최근 달로 init에서 설정)
-    month: "전체",     // "전체" | "MM"
+    from: "",          // "YYYY-MM-DD" (기본은 최근 달로 init에서 설정)
+    to: "",            // "YYYY-MM-DD"
     sort: "recent",    // recent | popular | name
     favOnly: false,
   };
@@ -94,10 +94,10 @@
     });
     return [...set].sort((a, b) => a.localeCompare(b, "ko"));
   }
-  function yearsList() {
-    const set = new Set();
-    ALL.forEach((s) => { const y = (s.date || "").slice(0, 4); if (y) set.add(y); });
-    return [...set].sort().reverse();
+  function dataDateRange() {
+    let mn = "", mx = "";
+    ALL.forEach((s) => { const d = s.date || ""; if (!d) return; if (!mn || d < mn) mn = d; if (d > mx) mx = d; });
+    return [mn, mx];
   }
 
   // ---------- 필터/정렬 ----------
@@ -105,8 +105,10 @@
     const q = state.q.trim();
     const cho = isChoOnly(q);
     VIEW = ALL.filter((s) => {
-      if (state.year !== "전체" && (s.date || "").slice(0, 4) !== state.year) return false;
-      if (state.month !== "전체" && (s.date || "").slice(5, 7) !== state.month) return false;
+      const d = s.date || "";
+      if (state.from && d && d < state.from) return false;
+      if (state.to && d && d > state.to) return false;
+      if (state.from && !d) return false;   // 날짜 없는 곡은 기간필터 시 제외
       if (state.cat !== "전체" && s.category !== state.cat) return false;
       if (state.choir !== "전체" && s.choir !== state.choir) return false;
       if (state.favOnly && !favs.has(s.id)) return false;
@@ -135,18 +137,17 @@
       .map((c) => `<option value="${c}" ${state.cat===c?"selected":""}>${c==="전체"?"구분 전체":c}</option>`).join("");
     const choirOpts = ["전체", ...choirs]
       .map((c) => `<option value="${esc(c)}" ${state.choir===c?"selected":""}>${c==="전체"?"찬양대 전체":esc(c)}</option>`).join("");
-    const yearOpts = `<option value="전체" ${state.year==="전체"?"selected":""}>전체 기간</option>` +
-      yearsList().map((y) => `<option value="${y}" ${state.year===y?"selected":""}>${y}년</option>`).join("");
-    const monthOpts = `<option value="전체" ${state.month==="전체"?"selected":""}>전체 월</option>` +
-      Array.from({length:12},(_,i)=>String(i+1).padStart(2,"0")).map((m)=>`<option value="${m}" ${state.month===m?"selected":""}>${+m}월</option>`).join("");
+    const [dmin, dmax] = dataDateRange();
 
     $("#controls").innerHTML = `
       <div class="search-row">
         <input id="q" type="search" placeholder="곡명 검색 (초성 가능: ㅈㅇㄴ)" value="${esc(state.q)}" />
       </div>
-      <div class="filter-row">
-        <select id="f-year" class="sel">${yearOpts}</select>
-        <select id="f-month" class="sel">${monthOpts}</select>
+      <div class="period-row">
+        <input type="date" id="f-from" class="date" value="${state.from}" min="${dmin}" max="${dmax}" />
+        <span class="tilde">~</span>
+        <input type="date" id="f-to" class="date" value="${state.to}" min="${dmin}" max="${dmax}" />
+        <button id="f-allperiod" class="period-all">전체기간</button>
       </div>
       <div class="filter-row">
         <select id="f-cat" class="sel">${catOpts}</select>
@@ -162,8 +163,9 @@
     const qEl = $("#q");
     let t;
     qEl.addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; apply(); }, 200); });
-    $("#f-year").addEventListener("change", (e) => { state.year = e.target.value; if (state.year === "전체") state.month = "전체"; renderControls(); apply(); });
-    $("#f-month").addEventListener("change", (e) => { state.month = e.target.value; apply(); });
+    $("#f-from").addEventListener("change", (e) => { state.from = e.target.value; apply(); });
+    $("#f-to").addEventListener("change", (e) => { state.to = e.target.value; apply(); });
+    $("#f-allperiod").addEventListener("click", () => { state.from = ""; state.to = ""; renderControls(); apply(); });
     $("#f-cat").addEventListener("change", (e) => { state.cat = e.target.value; state.choir = "전체"; renderControls(); apply(); });
     $("#f-choir").addEventListener("change", (e) => { state.choir = e.target.value; apply(); });
     $("#sort").addEventListener("change", (e) => { state.sort = e.target.value; apply(); });
@@ -320,10 +322,10 @@
   // ---------- 시작 ----------
   (async function init() {
     await load();
-    // 기본 기간 = 가장 최근 달
+    // 기본 기간 = 가장 최근 달(그 달 1일 ~ 최근 날짜)
     let latest = "";
     ALL.forEach((s) => { if ((s.date || "") > latest) latest = s.date; });
-    if (latest) { state.year = latest.slice(0, 4); state.month = latest.slice(5, 7); }
+    if (latest) { state.from = latest.slice(0, 7) + "-01"; state.to = latest; }
     renderControls();
     apply();
     if (window.hideSplash) window.hideSplash();
