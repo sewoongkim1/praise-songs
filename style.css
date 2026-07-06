@@ -23,7 +23,6 @@ body {
   font-family: "Noto Sans KR", system-ui, sans-serif;
   background: var(--bg); color: var(--ink);
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;   /* 가로 밀림/넘침 방지 */
 }
 img { max-width: 100%; display: block; }
 button { font-family: inherit; cursor: pointer; }
