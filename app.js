@@ -106,9 +106,10 @@
     const cho = isChoOnly(q);
     VIEW = ALL.filter((s) => {
       const d = s.date || "";
-      if (state.from && d && d < state.from) return false;
-      if (state.to && d && d > state.to) return false;
-      if (state.from && !d) return false;   // 날짜 없는 곡은 기간필터 시 제외
+      const dm = d.slice(0, 7);   // YYYY-MM
+      if ((state.from || state.to) && !d) return false;  // 날짜 없는 곡은 기간필터 시 제외
+      if (state.from && dm < state.from) return false;
+      if (state.to && dm > state.to) return false;
       if (state.cat !== "전체" && s.category !== state.cat) return false;
       if (state.choir !== "전체" && s.choir !== state.choir) return false;
       if (state.favOnly && !favs.has(s.id)) return false;
@@ -138,15 +139,16 @@
     const choirOpts = ["전체", ...choirs]
       .map((c) => `<option value="${esc(c)}" ${state.choir===c?"selected":""}>${c==="전체"?"찬양대 전체":esc(c)}</option>`).join("");
     const [dmin, dmax] = dataDateRange();
+    const mmin = dmin.slice(0, 7), mmax = dmax.slice(0, 7);
 
     $("#controls").innerHTML = `
       <div class="search-row">
         <input id="q" type="search" placeholder="곡명 검색 (초성 가능: ㅈㅇㄴ)" value="${esc(state.q)}" />
       </div>
       <div class="period-row">
-        <input type="date" id="f-from" class="date" value="${state.from}" min="${dmin}" max="${dmax}" />
+        <input type="month" id="f-from" class="date" value="${state.from}" min="${mmin}" max="${mmax}" />
         <span class="tilde">~</span>
-        <input type="date" id="f-to" class="date" value="${state.to}" min="${dmin}" max="${dmax}" />
+        <input type="month" id="f-to" class="date" value="${state.to}" min="${mmin}" max="${mmax}" />
         <button id="f-allperiod" class="period-all">전체기간</button>
       </div>
       <div class="filter-row">
@@ -225,20 +227,23 @@
     renderSelBar();
   }
 
-  // ---------- 선택 바 (상시 노출: 체크된 곡만 재생) ----------
+  // ---------- 선택 바 (전체선택/전체취소 토글 + 선택 듣기) ----------
   function renderSelBar() {
     let bar = $("#selbar");
-    const sel = selectedList();
-    if (!sel.length) { if (bar) bar.remove(); return; }   // 전부 해제했을 때만 숨김
+    if (!VIEW.length) { if (bar) bar.remove(); return; }
     if (!bar) { bar = document.createElement("div"); bar.id = "selbar"; document.body.appendChild(bar); }
-    const anyDesel = VIEW.some((s) => deselected.has(s.id));
+    const sel = selectedList();
+    const allSelected = sel.length === VIEW.length;
     bar.innerHTML = `
-      <span class="sb-count">☑ ${sel.length}곡</span>
-      <button class="sb-play" id="sb-play">▶ 선택 듣기</button>
-      ${anyDesel ? '<button class="sb-clear" id="sb-clear">모두 선택</button>' : ""}`;
-    $("#sb-play").onclick = () => { if (sel.length) openPlayer(0, sel); };
-    const clr = $("#sb-clear");
-    if (clr) clr.onclick = () => { VIEW.forEach((s) => deselected.delete(s.id)); renderGrid(); };
+      <button class="sb-toggle" id="sb-toggle">${allSelected ? "☑ 전체취소" : "☐ 전체선택"}</button>
+      <span class="sb-count">${sel.length}곡</span>
+      <button class="sb-play" id="sb-play" ${sel.length ? "" : "disabled"}>▶ 선택 듣기</button>`;
+    $("#sb-toggle").onclick = () => {
+      if (allSelected) VIEW.forEach((s) => deselected.add(s.id));   // 전체취소
+      else VIEW.forEach((s) => deselected.delete(s.id));           // 전체선택
+      renderGrid();
+    };
+    $("#sb-play").onclick = () => { const l = selectedList(); if (l.length) openPlayer(0, l); };
   }
 
   // ---------- 플레이어 (YouTube IFrame API) ----------
@@ -363,10 +368,10 @@
   // ---------- 시작 ----------
   (async function init() {
     await load();
-    // 기본 기간 = 가장 최근 달(그 달 1일 ~ 최근 날짜)
+    // 기본 기간 = 가장 최근 달(연·월)
     let latest = "";
     ALL.forEach((s) => { if ((s.date || "") > latest) latest = s.date; });
-    if (latest) { state.from = latest.slice(0, 7) + "-01"; state.to = latest; }
+    if (latest) { state.from = latest.slice(0, 7); state.to = latest.slice(0, 7); }
     renderControls();
     apply();
     if (window.hideSplash) window.hideSplash();
