@@ -143,19 +143,16 @@ html.dark .period-row .date::-webkit-calendar-picker-indicator { filter: invert(
 .period-row .filter-btn { padding: 10px 8px; font-size: 12.5px; }
 .count-line .sort-btn { flex: none; width: auto; padding: 7px 10px 7px 13px; font-size: 12.5px; }
 
-/* 바텀시트 */
-#sheet { position: fixed; inset: 0; z-index: 300; }
-#sheet .sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.4); opacity: 0; transition: opacity .25s; }
-#sheet.show .sheet-bg { opacity: 1; }
+/* 바텀시트 — flex로 하단 고정(절대배치 미사용: 기기 호환성 ↑) */
+#sheet { position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column; justify-content: flex-end; }
+#sheet .sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.4); }
 #sheet .sheet-panel {
-  position: absolute; left: 0; right: 0; bottom: 0;
+  position: relative; z-index: 1; width: 100%;
   background: var(--card); border-radius: 22px 22px 0 0; overflow: hidden;
-  max-height: 80vh; display: flex; flex-direction: column;
-  transform: translateY(101%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+  max-height: 85vh; display: flex; flex-direction: column;
   box-shadow: 0 -12px 40px rgba(0,0,0,.32);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-#sheet.show .sheet-panel { transform: translateY(0); }
 .sheet-grip { width: 42px; height: 4px; border-radius: 3px; background: var(--line); margin: 10px auto 2px; }
 .sheet-title { text-align: center; font-weight: 800; font-size: 15.5px; padding: 8px 16px; color: var(--ink); border-bottom: 1px solid var(--line); }
 .sheet-list { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 10px 16px; -webkit-overflow-scrolling: touch; }
