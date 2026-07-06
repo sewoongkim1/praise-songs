@@ -74,11 +74,19 @@ Deno.serve(async (req) => {
     switch (action) {
       // ---------- 공개 ----------
       case "getSongs": {
-        const { data, error } = await db
-          .from("songs").select("*").eq("hidden", false)
-          .order("svc_date", { ascending: false }).limit(5000);
-        if (error) throw error;
-        return json({ ok: true, songs: data ?? [] });
+        // PostgREST 기본 1000행 제한 → range로 전곡 페이지네이션
+        const all: any[] = [];
+        const PAGE = 1000;
+        for (let from = 0; ; from += PAGE) {
+          const { data, error } = await db
+            .from("songs").select("*").eq("hidden", false)
+            .order("svc_date", { ascending: false })
+            .range(from, from + PAGE - 1);
+          if (error) throw error;
+          all.push(...(data ?? []));
+          if (!data || data.length < PAGE) break;
+        }
+        return json({ ok: true, songs: all });
       }
 
       // ---------- 관리자 ----------
@@ -89,10 +97,17 @@ Deno.serve(async (req) => {
       }
       case "adminList": {
         if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
-        const { data, error } = await db.from("songs").select("*")
-          .order("svc_date", { ascending: false }).limit(5000);
-        if (error) throw error;
-        return json({ ok: true, songs: data ?? [] });
+        const all: any[] = [];
+        const PAGE = 1000;
+        for (let from = 0; ; from += PAGE) {
+          const { data, error } = await db.from("songs").select("*")
+            .order("svc_date", { ascending: false })
+            .range(from, from + PAGE - 1);
+          if (error) throw error;
+          all.push(...(data ?? []));
+          if (!data || data.length < PAGE) break;
+        }
+        return json({ ok: true, songs: all });
       }
       case "saveSong": {
         if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
