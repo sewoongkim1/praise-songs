@@ -23,6 +23,7 @@ body {
   font-family: "Noto Sans KR", system-ui, sans-serif;
   background: var(--bg); color: var(--ink);
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;   /* 가로 밀림/넘침 방지 */
 }
 img { max-width: 100%; display: block; }
 button { font-family: inherit; cursor: pointer; }
@@ -147,16 +148,16 @@ html.dark .period-row .date::-webkit-calendar-picker-indicator { filter: invert(
 #sheet.show .sheet-bg { opacity: 1; }
 #sheet .sheet-panel {
   position: absolute; left: 0; right: 0; bottom: 0;
-  background: var(--card); border-radius: 20px 20px 0 0;
-  max-height: 72vh; display: flex; flex-direction: column;
+  background: var(--card); border-radius: 22px 22px 0 0; overflow: hidden;
+  max-height: 80vh; display: flex; flex-direction: column;
   transform: translateY(101%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
-  box-shadow: 0 -10px 34px rgba(0,0,0,.3);
+  box-shadow: 0 -12px 40px rgba(0,0,0,.32);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 #sheet.show .sheet-panel { transform: translateY(0); }
 .sheet-grip { width: 42px; height: 4px; border-radius: 3px; background: var(--line); margin: 10px auto 2px; }
 .sheet-title { text-align: center; font-weight: 800; font-size: 15.5px; padding: 8px 16px; color: var(--ink); border-bottom: 1px solid var(--line); }
-.sheet-list { overflow-y: auto; padding: 6px 10px 16px; -webkit-overflow-scrolling: touch; }
+.sheet-list { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 10px 16px; -webkit-overflow-scrolling: touch; }
 .sheet-item {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
   padding: 15px 14px; font-size: 16px; font-weight: 600;
@@ -166,6 +167,22 @@ html.dark .period-row .date::-webkit-calendar-picker-indicator { filter: invert(
 .sheet-item .chk { color: var(--navy); font-weight: 800; }
 html.dark .sheet-item.on { background: rgba(255,255,255,.1); color: #a9c2ec; }
 html.dark .sheet-item.on .chk { color: #a9c2ec; }
+
+/* 기간 시트 */
+.sheet-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 14px 8px; }
+.period-sheet .psec-label { font-size: 13px; font-weight: 800; color: var(--sub); margin: 12px 2px 8px; }
+.pchip-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.pchip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.pchip {
+  padding: 10px 8px; font-size: 13.5px; font-weight: 700; white-space: nowrap;
+  border: 1.5px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); cursor: pointer;
+}
+.pchip.yr { flex: none; }
+.pchip.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.psep { height: 1px; background: var(--line); margin: 16px 0 2px; }
+.sheet-foot { display: flex; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); }
+.sf-all { flex: 1; padding: 13px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--card); color: var(--sub); font-weight: 700; font-size: 14px; cursor: pointer; }
+.sf-apply { flex: 2; padding: 13px; border: none; border-radius: 12px; background: var(--navy); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; }
 .play-all {
   background: var(--navy); color: #fff; border: none;
   padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;

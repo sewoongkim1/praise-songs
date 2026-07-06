@@ -148,10 +148,7 @@
         <input id="q" type="search" placeholder="곡명 검색 (초성 가능: ㅈㅇㄴ)" value="${esc(state.q)}" />
       </div>
       <div class="period-row">
-        <button class="filter-btn" id="f-from"><span>${esc(monthLabel(state.from) || "시작")}</span></button>
-        <span class="tilde">~</span>
-        <button class="filter-btn" id="f-to"><span>${esc(monthLabel(state.to) || "종료")}</span></button>
-        <button id="f-allperiod" class="period-all">전체</button>
+        <button class="filter-btn period-btn" id="f-period"><span>📅 ${esc(periodLabel())}</span></button>
       </div>
       <div class="filter-row">
         <button class="filter-btn" id="f-cat"><span>${state.cat === "전체" ? "구분 전체" : esc(state.cat)}</span></button>
@@ -161,13 +158,7 @@
     const qEl = $("#q");
     let t;
     qEl.addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; apply(); }, 200); });
-    $("#f-from").onclick = () => openSheet("시작 (연·월)", monthItems(), state.from, (v) => {
-      state.from = v; if (state.to && v > state.to) state.to = v; renderControls(); apply();
-    });
-    $("#f-to").onclick = () => openSheet("종료 (연·월)", monthItems(), state.to, (v) => {
-      state.to = v; if (state.from && v < state.from) state.from = v; renderControls(); apply();
-    });
-    $("#f-allperiod").onclick = () => { state.from = ""; state.to = ""; renderControls(); apply(); };
+    $("#f-period").onclick = openPeriodSheet;
     $("#f-cat").onclick = () => openSheet("구분 선택", [{ v: "전체", l: "구분 전체" }, ...categoryOptions().map((c) => ({ v: c, l: c }))], state.cat, (v) => {
       state.cat = v; state.choir = "전체"; renderControls(); apply();
     });
@@ -177,42 +168,84 @@
   }
 
   // ---------- 바텀시트 ----------
-  function openSheet(title, items, current, onPick) {
+  function showSheet(innerHTML, setup) {
     let el = document.getElementById("sheet");
     if (el) el.remove();
-    el = document.createElement("div");
-    el.id = "sheet";
-    el.innerHTML = `
-      <div class="sheet-bg"></div>
-      <div class="sheet-panel">
-        <div class="sheet-grip"></div>
-        <div class="sheet-title">${esc(title)}</div>
-        <div class="sheet-list">
-          ${items.map((it) => `<button class="sheet-item ${String(it.v) === String(current) ? "on" : ""}" data-v="${esc(String(it.v))}">
-            <span>${esc(it.l)}</span>${String(it.v) === String(current) ? '<span class="chk">✓</span>' : ""}
-          </button>`).join("")}
-        </div>
-      </div>`;
+    el = document.createElement("div"); el.id = "sheet";
+    el.innerHTML = `<div class="sheet-bg"></div><div class="sheet-panel">${innerHTML}</div>`;
     document.body.appendChild(el);
     requestAnimationFrame(() => el.classList.add("show"));
     const close = () => { el.classList.remove("show"); setTimeout(() => el && el.remove(), 260); };
     el.querySelector(".sheet-bg").onclick = close;
-    el.querySelectorAll(".sheet-item").forEach((b) => b.onclick = () => { close(); onPick(b.dataset.v); });
-    const cur = el.querySelector(".sheet-item.on"); if (cur) cur.scrollIntoView({ block: "center" });
+    setup(el, close);
   }
-  function monthItems() {
+  // 목록 선택 시트(구분·찬양대·정렬)
+  function openSheet(title, items, current, onPick) {
+    const inner = `
+      <div class="sheet-grip"></div>
+      <div class="sheet-title">${esc(title)}</div>
+      <div class="sheet-list">
+        ${items.map((it) => `<button class="sheet-item ${String(it.v) === String(current) ? "on" : ""}" data-v="${esc(String(it.v))}">
+          <span>${esc(it.l)}</span>${String(it.v) === String(current) ? '<span class="chk">✓</span>' : ""}
+        </button>`).join("")}
+      </div>`;
+    showSheet(inner, (el, close) => {
+      el.querySelectorAll(".sheet-item").forEach((b) => b.onclick = () => { close(); onPick(b.dataset.v); });
+      const cur = el.querySelector(".sheet-item.on"); if (cur) cur.scrollIntoView({ block: "center" });
+    });
+  }
+  // 기간 시트(시작/종료 · 년·월)
+  function openPeriodSheet() {
     const [dmin, dmax] = dataDateRange();
-    if (!dmin) return [];
-    const items = [];
-    let y = +dmax.slice(0, 4), m = +dmax.slice(5, 7);
-    const minKey = +dmin.slice(0, 4) * 12 + (+dmin.slice(5, 7) - 1);
-    while (y * 12 + (m - 1) >= minKey) {
-      items.push({ v: `${y}-${String(m).padStart(2, "0")}`, l: `${y}년 ${m}월` });
-      m--; if (m < 1) { m = 12; y--; }
-    }
-    return items;
+    if (!dmin) return;
+    const years = []; for (let y = +dmax.slice(0, 4); y >= +dmin.slice(0, 4); y--) years.push(y);
+    let fy = +(state.from || dmin).slice(0, 4), fm = +(state.from || dmin).slice(5, 7);
+    let ty = +(state.to || dmax).slice(0, 4), tm = +(state.to || dmax).slice(5, 7);
+    const yrChips = () => years.map((y) => `<button class="pchip yr" data-y="${y}">${y}</button>`).join("");
+    const moGrid = () => Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<button class="pchip mo" data-m="${m}">${m}월</button>`).join("");
+    const section = (key) => `
+      <div class="psec" data-key="${key}">
+        <div class="psec-label">${key === "from" ? "시작" : "종료"}</div>
+        <div class="pchip-row">${yrChips()}</div>
+        <div class="pchip-grid">${moGrid()}</div>
+      </div>`;
+    const inner = `
+      <div class="sheet-grip"></div>
+      <div class="sheet-title">조회 기간</div>
+      <div class="sheet-body period-sheet">
+        ${section("from")}<div class="psep"></div>${section("to")}
+      </div>
+      <div class="sheet-foot">
+        <button class="sf-all" id="p-all">전체 기간</button>
+        <button class="sf-apply" id="p-apply">적용</button>
+      </div>`;
+    showSheet(inner, (el, close) => {
+      const q = (s) => el.querySelectorAll(s);
+      const paint = () => {
+        q('.psec[data-key="from"] .yr').forEach((b) => b.classList.toggle("on", +b.dataset.y === fy));
+        q('.psec[data-key="from"] .mo').forEach((b) => b.classList.toggle("on", +b.dataset.m === fm));
+        q('.psec[data-key="to"] .yr').forEach((b) => b.classList.toggle("on", +b.dataset.y === ty));
+        q('.psec[data-key="to"] .mo').forEach((b) => b.classList.toggle("on", +b.dataset.m === tm));
+      };
+      q('.psec[data-key="from"] .yr').forEach((b) => b.onclick = () => { fy = +b.dataset.y; paint(); });
+      q('.psec[data-key="from"] .mo').forEach((b) => b.onclick = () => { fm = +b.dataset.m; paint(); });
+      q('.psec[data-key="to"] .yr').forEach((b) => b.onclick = () => { ty = +b.dataset.y; paint(); });
+      q('.psec[data-key="to"] .mo').forEach((b) => b.onclick = () => { tm = +b.dataset.m; paint(); });
+      paint();
+      q(".pchip-row").forEach((row) => { const on = row.querySelector(".yr.on"); if (on) on.scrollIntoView({ inline: "center", block: "nearest" }); });
+      el.querySelector("#p-all").onclick = () => { state.from = ""; state.to = ""; close(); renderControls(); apply(); };
+      el.querySelector("#p-apply").onclick = () => {
+        let f = `${fy}-${String(fm).padStart(2, "0")}`, t = `${ty}-${String(tm).padStart(2, "0")}`;
+        if (f > t) { const tmp = f; f = t; t = tmp; }
+        state.from = f; state.to = t; close(); renderControls(); apply();
+      };
+    });
   }
-  function monthLabel(v) { return v ? `${+v.slice(0, 4)}년 ${+v.slice(5, 7)}월` : ""; }
+  function periodLabel() {
+    if (!state.from && !state.to) return "전체 기간";
+    const s = (v) => (v ? v.replace("-", ".") : "");
+    return `${s(state.from)} ~ ${s(state.to)}`;
+  }
   function sortLabel(v) { return { recent: "최신순", oldest: "오래된순", popular: "인기순", name: "가나다순" }[v] || "최신순"; }
 
   // ---------- 렌더: 그리드 ----------
