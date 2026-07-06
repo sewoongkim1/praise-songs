@@ -181,10 +181,17 @@ html.dark .c-cat { background: rgba(255,255,255,.1); color: #a9c2ec; }
   background: rgba(0,0,0,.5); border: none; color: #fff;
   width: 34px; height: 34px; border-radius: 50%; font-size: 15px;
 }
-.yt-wrap { position: relative; aspect-ratio: 16/9; background: #000; border-radius: 16px 16px 0 0; overflow: hidden; }
-.yt-wrap #yt-player, .yt-wrap iframe {
+/* 동영상 다크 매트 액자 */
+.yt-wrap { background: linear-gradient(160deg, #10233f, #0a1424); padding: 14px; border-radius: 16px 16px 0 0; }
+.yt-frame {
+  position: relative; aspect-ratio: 16/9; background: #000;
+  border-radius: 10px; overflow: hidden;
+  box-shadow: 0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.07);
+}
+.yt-frame #yt-player, .yt-frame iframe {
   position: absolute; inset: 0; width: 100% !important; height: 100% !important; border: 0;
 }
+@media (max-width: 480px) { .yt-wrap { padding: 10px; } }
 .pl-meta { padding: 14px 18px 6px; }
 .pl-meta h3 { font-size: 17px; font-weight: 800; line-height: 1.4; }
 .pl-meta p { margin-top: 5px; font-size: 13px; color: var(--sub); }
@@ -206,9 +213,12 @@ html.dark .pl-btn:disabled { background: #2a3646; }
 .pl-auto { font-size: 13px; color: var(--sub); display: flex; align-items: center; gap: 5px; }
 .pl-auto input { width: 16px; height: 16px; accent-color: var(--navy); }
 .pl-tog {
-  padding: 7px 12px; font-size: 12.5px; font-weight: 700;
-  border: 1.5px solid var(--line); border-radius: 999px; background: var(--card); color: var(--sub);
+  padding: 8px 14px; font-size: 12.5px; font-weight: 700;
+  border: 1.5px solid transparent; border-radius: 999px;
+  background: rgba(26,58,107,.09); color: var(--navy); cursor: pointer;
+  transition: background .15s, color .15s;
 }
+html.dark .pl-tog { background: rgba(255,255,255,.1); color: #a9c2ec; }
 .pl-tog.on { background: var(--gold); color: #fff; border-color: var(--gold); }
 
 /* ---------- 선택 바(여러 곡 담아 듣기) ---------- */
