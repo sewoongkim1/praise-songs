@@ -163,7 +163,6 @@
       <div class="filter-row">
         <select id="f-cat" class="sel">${catOpts}</select>
         <select id="f-choir" class="sel">${choirOpts}</select>
-        <button class="fav-toggle ${state.favOnly ? "on" : ""}" data-favonly>★ 즐겨찾기</button>
       </div>`;
 
     const qEl = $("#q");
@@ -174,19 +173,23 @@
     $("#f-allperiod").addEventListener("click", () => { state.from = ""; state.to = ""; renderControls(); apply(); });
     $("#f-cat").addEventListener("change", (e) => { state.cat = e.target.value; state.choir = "전체"; renderControls(); apply(); });
     $("#f-choir").addEventListener("change", (e) => { state.choir = e.target.value; apply(); });
-    $("[data-favonly]").addEventListener("click", () => { state.favOnly = !state.favOnly; renderControls(); apply(); });
   }
 
   // ---------- 렌더: 그리드 ----------
   function renderGrid() {
     $("#count").innerHTML = `<span class="cnt-num">${VIEW.length.toLocaleString()}곡</span>` +
-      `<select id="sort" class="sel sort-sel">
-         <option value="recent" ${state.sort==="recent"?"selected":""}>최신순</option>
-         <option value="popular" ${state.sort==="popular"?"selected":""}>인기순</option>
-         <option value="name" ${state.sort==="name"?"selected":""}>가나다순</option>
-       </select>`;
+      `<div class="cnt-right">
+         <button class="fav-toggle ${state.favOnly ? "on" : ""}" data-favonly>★ 즐겨찾기</button>
+         <select id="sort" class="sel sort-sel">
+           <option value="recent" ${state.sort==="recent"?"selected":""}>최신순</option>
+           <option value="popular" ${state.sort==="popular"?"selected":""}>인기순</option>
+           <option value="name" ${state.sort==="name"?"selected":""}>가나다순</option>
+         </select>
+       </div>`;
     const so = $("#sort");
     if (so) so.addEventListener("change", (e) => { state.sort = e.target.value; apply(); });
+    const fav = $("[data-favonly]");
+    if (fav) fav.addEventListener("click", () => { state.favOnly = !state.favOnly; apply(); });
     if (!VIEW.length) {
       $("#grid").innerHTML = `<p class="empty">${state.favOnly ? "즐겨찾기한 찬양이 없어요 ★" : "검색 결과가 없어요"}</p>`;
       renderSelBar();
