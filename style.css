@@ -19,10 +19,12 @@ html.dark {
   --shadow: 0 2px 12px rgba(0, 0, 0, .35);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { overflow-x: hidden; }  /* 가로 넘침 방지 — body가 아닌 html에(삼성 sticky 헤더 안전) */
 body {
   font-family: "Noto Sans KR", system-ui, sans-serif;
   background: var(--bg); color: var(--ink);
   -webkit-text-size-adjust: 100%;
+  width: 100%; max-width: 100%;
 }
 img { max-width: 100%; display: block; }
 button { font-family: inherit; cursor: pointer; }
