@@ -31,7 +31,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=20260707q" />
+  <link rel="stylesheet" href="style.css?v=20260707r" />
 </head>
 <body>
   <div id="splash">
@@ -39,7 +39,7 @@
       <img id="splash-logo" src="https://summer.onlybible.kr/logo3.png" alt="고척교회" />
       <div class="splash-title">고척교회 찬양 아카이브</div>
       <div class="splash-sub">오직 성경, 말씀이 답이다!</div>
-      <div class="splash-ver">v1.41</div>
+      <div class="splash-ver">v1.42</div>
     </div>
   </div>
   <script>
@@ -60,7 +60,15 @@
         <span>고척교회 · 예배 찬양</span>
       </div>
     </div>
-    <button id="theme-toggle" class="icon-btn" aria-label="야간 모드">🌙</button>
+    <div class="topbar-actions">
+      <button id="share-btn" class="icon-btn" aria-label="공유하기" title="공유하기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line>
+        </svg>
+      </button>
+      <button id="theme-toggle" class="icon-btn" aria-label="야간 모드">🌙</button>
+    </div>
   </header>
 
   <main id="app">
@@ -105,10 +113,32 @@
         sync();
       });
       sync();
+
+      // 공유하기
+      function toast(msg) {
+        var t = document.createElement("div");
+        t.className = "share-toast";
+        t.textContent = msg;
+        document.body.appendChild(t);
+        requestAnimationFrame(function () { t.classList.add("show"); });
+        setTimeout(function () { t.classList.remove("show"); setTimeout(function () { t.remove(); }, 300); }, 2000);
+      }
+      var shareBtn = document.getElementById("share-btn");
+      if (shareBtn) shareBtn.addEventListener("click", function () {
+        var url = "https://worship.onlybible.kr/";
+        var data = { title: "고척교회 찬양 아카이브", text: "고척교회 예배 찬양 영상 아카이브 — 함께 찬양해요! 🎵", url: url };
+        if (navigator.share) {
+          navigator.share(data).catch(function () {});
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () { toast("링크가 복사되었어요! 📋"); }).catch(function () { window.prompt("이 링크를 복사하세요", url); });
+        } else {
+          window.prompt("이 링크를 복사하세요", url);
+        }
+      });
     })();
   </script>
-  <script src="js/config.js?v=20260707q"></script>
-  <script src="js/api.js?v=20260707q"></script>
-  <script src="app.js?v=20260707q"></script>
+  <script src="js/config.js?v=20260707r"></script>
+  <script src="js/api.js?v=20260707r"></script>
+  <script src="app.js?v=20260707r"></script>
 </body>
 </html>
