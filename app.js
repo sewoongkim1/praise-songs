@@ -248,8 +248,14 @@
   }
 
   // ---------- 플레이어 (YouTube IFrame API) ----------
-  let ytPlayer = null, ytReady = false, curIdx = -1, wakeLock = null;
-  let activeQueue = [];   // 현재 재생 큐(VIEW 또는 선택 목록)
+  let ytPlayer = null, ytReady = false, wakeLock = null;
+  let activeQueue = [];   // 재생 곡 배열(VIEW 또는 선택 목록)
+  let playOrder = [];     // activeQueue 인덱스의 재생 순서
+  let orderPos = -1;      // playOrder 내 현재 위치
+  let curIdx = -1;        // activeQueue 내 현재 인덱스
+
+  const isOn = (sel) => $(sel).getAttribute("aria-pressed") === "true";
+  function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
   window.onYouTubeIframeAPIReady = function () { ytReady = true; };
   (function loadYT() {
@@ -263,26 +269,50 @@
   }
   function relWake() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
 
-  function setMeta(s) {
+  // 재생 순서 생성(셔플 여부 반영, startIdx를 현재로)
+  function buildOrder(startIdx) {
+    const n = activeQueue.length;
+    let ord = [...Array(n).keys()];
+    if (isOn("#pl-shuffle")) {
+      shuffleArr(ord);
+      const p = ord.indexOf(startIdx);
+      if (p > 0) { ord.splice(p, 1); ord.unshift(startIdx); }
+    }
+    playOrder = ord;
+    orderPos = Math.max(0, playOrder.indexOf(startIdx));
+    curIdx = playOrder[orderPos];
+  }
+
+  function setMeta() {
+    const s = activeQueue[curIdx]; if (!s) return;
     $("#pl-title").textContent = s.song;
     $("#pl-sub").textContent = [s.choir, s.category, fmtDate(s.date)].filter(Boolean).join(" · ")
-      + (activeQueue.length > 1 ? `  ·  ${curIdx + 1}/${activeQueue.length}곡` : "");
+      + (activeQueue.length > 1 ? `  ·  ${orderPos + 1}/${activeQueue.length}곡` : "");
+  }
+  function loadCur() {
+    const s = activeQueue[curIdx]; if (!s) return;
+    setMeta();
+    if (ytPlayer) ytPlayer.loadVideoById(s.id);
+  }
+  function gotoPos(pos) {
+    if (pos < 0 || pos >= playOrder.length) return;
+    orderPos = pos; curIdx = playOrder[pos]; loadCur();
   }
 
   function openPlayer(i, queueArr) {
     activeQueue = queueArr && queueArr.length ? queueArr : VIEW;
     if (i < 0 || i >= activeQueue.length) return;
-    curIdx = i;
-    const s = activeQueue[i];
+    buildOrder(i);
     $("#player-modal").hidden = false;
     document.body.style.overflow = "hidden";
-    setMeta(s);
+    setMeta();
     reqWake();
 
     const startIt = () => {
-      if (ytPlayer) { ytPlayer.loadVideoById(s.id); return; }
+      const vid = activeQueue[curIdx].id;
+      if (ytPlayer) { ytPlayer.loadVideoById(vid); return; }
       ytPlayer = new YT.Player("yt-player", {
-        videoId: s.id,
+        videoId: vid,
         playerVars: { playsinline: 1, rel: 0, modestbranding: 1, autoplay: 1 },
         events: {
           onStateChange: (e) => { if (e.data === YT.PlayerState.ENDED) onEnded(); },
@@ -295,14 +325,14 @@
   }
 
   function onEnded() {
-    if (!$("#pl-autonext").checked) return;
-    if (curIdx + 1 < activeQueue.length) playAt(curIdx + 1);
-  }
-  function playAt(i) {
-    if (i < 0 || i >= activeQueue.length) return;
-    curIdx = i;
-    setMeta(activeQueue[i]);
-    ytPlayer && ytPlayer.loadVideoById(activeQueue[i].id);
+    if (!$("#pl-autonext").checked) return;   // 연속재생 꺼짐
+    if (orderPos + 1 < playOrder.length) { gotoPos(orderPos + 1); return; }
+    // 마지막 곡 → 반복이면 처음으로(셔플이면 새로 섞어서)
+    if (isOn("#pl-repeat")) {
+      if (isOn("#pl-shuffle")) buildOrder(playOrder[Math.floor(Math.random() * playOrder.length)]);
+      else orderPos = 0, curIdx = playOrder[0];
+      loadCur();
+    }
   }
   function closePlayer() {
     $("#player-modal").hidden = true;
@@ -310,9 +340,26 @@
     try { ytPlayer && ytPlayer.stopVideo(); } catch (e) {}
     relWake();
   }
+  function toggleBtn(sel) {
+    const b = $(sel); const on = !isOn(sel);
+    b.setAttribute("aria-pressed", String(on)); b.classList.toggle("on", on);
+    return on;
+  }
+
   $("#player-modal").querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", closePlayer));
-  $("#pl-prev").addEventListener("click", () => playAt(curIdx - 1));
-  $("#pl-next").addEventListener("click", () => playAt(curIdx + 1));
+  $("#pl-prev").addEventListener("click", () => {
+    if (orderPos - 1 >= 0) gotoPos(orderPos - 1);
+    else if (isOn("#pl-repeat")) gotoPos(playOrder.length - 1);
+  });
+  $("#pl-next").addEventListener("click", () => {
+    if (orderPos + 1 < playOrder.length) gotoPos(orderPos + 1);
+    else if (isOn("#pl-repeat")) gotoPos(0);
+  });
+  $("#pl-repeat").addEventListener("click", () => toggleBtn("#pl-repeat"));
+  $("#pl-shuffle").addEventListener("click", () => {
+    toggleBtn("#pl-shuffle");
+    if (activeQueue.length) buildOrder(curIdx);   // 현재 곡 유지하며 이후 순서 재구성
+  });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#player-modal").hidden) closePlayer(); });
   document.addEventListener("visibilitychange", () => { if (!document.hidden && wakeLock === null && !$("#player-modal").hidden) reqWake(); });
 
