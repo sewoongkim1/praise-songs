@@ -579,31 +579,5 @@
     window.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(saveState, 250); }, { passive: true });
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveState(); });
     window.addEventListener("pagehide", saveState);
-
-    // 가로 넘침 진단(?diag) — 화면 밖으로 튀어나온 요소를 화면에 표시
-    if (location.search.indexOf("diag") >= 0) setTimeout(runDiag, 900);
   })();
-
-  function runDiag() {
-    const w = document.documentElement.clientWidth;
-    const over = document.documentElement.scrollWidth - w;
-    const bad = [];
-    document.querySelectorAll("body *").forEach((e) => {
-      const r = e.getBoundingClientRect();
-      if (r.width === 0 && r.height === 0) return;
-      if (r.right > w + 1 || r.left < -1) {
-        const cls = (e.className && typeof e.className === "string") ? "." + e.className.trim().split(/\s+/).join(".") : e.tagName.toLowerCase();
-        bad.push(`${cls}  [${Math.round(r.left)}~${Math.round(r.right)} / w${Math.round(r.width)}]`);
-      }
-    });
-    const uniq = [...new Set(bad)].slice(0, 14);
-    const box = document.createElement("div");
-    box.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:9999;max-height:60vh;overflow:auto;background:#111;color:#0f0;font:12px/1.5 monospace;padding:12px;white-space:pre-wrap;box-shadow:0 -4px 20px rgba(0,0,0,.5)";
-    box.textContent =
-      `[가로넘침 진단]\n뷰포트 clientWidth: ${w}px\nscrollWidth: ${document.documentElement.scrollWidth}px\n넘침: ${over}px\n\n튀어나온 요소(왼쪽~오른쪽 / 폭):\n` +
-      (uniq.length ? uniq.join("\n") : "(문서 기준 없음 — 확대/줌 또는 캐시 가능성)") +
-      `\n\ndevicePixelRatio: ${window.devicePixelRatio}\nvisualViewport: ${window.visualViewport ? Math.round(window.visualViewport.width) + "x" + Math.round(window.visualViewport.height) + " scale" + (window.visualViewport.scale || 1) : "N/A"}\n\n(닫기: 탭)`;
-    box.onclick = () => box.remove();
-    document.body.appendChild(box);
-  }
 })();
