@@ -42,7 +42,7 @@
       <img id="splash-logo" src="https://summer.onlybible.kr/logo3.png" alt="고척교회" />
       <div class="splash-title">고척교회 찬양 아카이브</div>
       <div class="splash-sub">오직 성경, 말씀이 답이다!</div>
-      <div class="splash-ver">v1.44</div>
+      <div class="splash-ver">v1.45</div>
     </div>
   </div>
   <script>
@@ -64,6 +64,7 @@
       </div>
     </div>
     <div class="topbar-actions">
+      <button id="goto-memorize" class="icon-btn" aria-label="성경말씀 암송으로 가기" title="성경말씀 암송으로 가기">📖</button>
       <button id="share-btn" class="icon-btn" aria-label="성경암송 앱 공유하기" title="성경말씀 암송 앱 공유하기">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
@@ -126,6 +127,8 @@
         requestAnimationFrame(function () { t.classList.add("show"); });
         setTimeout(function () { t.classList.remove("show"); setTimeout(function () { t.remove(); }, 300); }, 2000);
       }
+      var goMem = document.getElementById("goto-memorize");
+      if (goMem) goMem.addEventListener("click", function () { location.href = "https://gocheok.onlybible.kr/"; });
       var shareBtn = document.getElementById("share-btn");
       if (shareBtn) shareBtn.addEventListener("click", function () {
         var url = "https://gocheok.onlybible.kr/";
