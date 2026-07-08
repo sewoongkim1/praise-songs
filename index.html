@@ -64,7 +64,7 @@
       </div>
     </div>
     <div class="topbar-actions">
-      <button id="share-btn" class="icon-btn" aria-label="공유하기" title="공유하기">
+      <button id="share-btn" class="icon-btn" aria-label="성경암송 앱 공유하기" title="성경말씀 암송 앱 공유하기">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
           <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line>
@@ -128,8 +128,8 @@
       }
       var shareBtn = document.getElementById("share-btn");
       if (shareBtn) shareBtn.addEventListener("click", function () {
-        var url = "https://worship.onlybible.kr/";
-        var data = { title: "고척교회 찬양 아카이브", text: "함께 찬양해요! 🎵", url: url };
+        var url = "https://gocheok.onlybible.kr/";
+        var data = { title: "고척교회 성경말씀 암송", text: "말씀을 마음에 새겨요 — 함께 성경암송! 📖", url: url };
         if (navigator.share) {
           navigator.share(data).catch(function () {});
         } else if (navigator.clipboard && navigator.clipboard.writeText) {
