@@ -579,7 +579,11 @@
     // 이번 주 = 가장 최근 예배일의 '찬양대'만
     const choirs = dated.filter((s) => s.category === "찬양대").slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     const latestDate = choirs.length ? choirs[0].date : "";
-    const thisWeek = choirs.filter((s) => s.date === latestDate);
+    // 이번 주 찬양대 표시 순서: 할렐루야 → 임마누엘 → 시온 → 가브리엘 → (그 외)
+    const WEEK_ORDER = ["할렐루야", "임마누엘", "시온", "가브리엘"];
+    const weekIdx = (s) => { const i = WEEK_ORDER.findIndex((k) => (s.choir || "").includes(k)); return i === -1 ? 99 : i; };
+    const thisWeek = choirs.filter((s) => s.date === latestDate)
+      .sort((a, b) => weekIdx(a) - weekIdx(b) || (a.choirOrder - b.choirOrder) || a.song.localeCompare(b.song, "ko"));
     // 그 밖의 찬양(찬양대 제외) 최근
     const others = dated.filter((s) => s.category !== "찬양대").slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 12);
 
