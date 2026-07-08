@@ -560,6 +560,62 @@
     } catch (e) {}
   }
 
+  // ---------- 매거진 홈(이번 주/최근 예배 찬양) ----------
+  function fmtDateFull(d) {
+    if (!d) return "";
+    const wd = ["일", "월", "화", "수", "목", "금", "토"][new Date(d + "T00:00:00").getDay()];
+    const [y, m, dd] = d.split("-");
+    return `${y}.${m}.${dd} (${wd})`;
+  }
+  function homeCardImg(s) {
+    return `<span class="hp-thumb"><img loading="lazy" src="${s.thumb}" alt="" onerror="this.src='https://i.ytimg.com/vi/${s.id}/hqdefault.jpg'"><span class="hp-play">▶</span></span>`;
+  }
+  function renderHome() {
+    const homeEl = $("#home");
+    if (!homeEl) return;
+    const dated = ALL.filter((s) => s.date).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    if (!dated.length) { homeEl.innerHTML = ""; return; }
+
+    const latestDate = dated[0].date;
+    const thisWeek = dated.filter((s) => s.date === latestDate);
+    const recent = dated.filter((s) => s.date !== latestDate).slice(0, 12);
+    const hero = thisWeek[0];
+    const rest = thisWeek.slice(1);
+
+    const weekRow = (s, i) => `
+      <button class="week-row" data-q="week" data-i="${i}">
+        ${homeCardImg(s)}
+        <span class="wr-body"><span class="wr-title">${esc(s.song)}</span><span class="wr-sub">${esc(s.choir)}</span></span>
+      </button>`;
+    const miniCard = (s, i) => `
+      <button class="mini-card" data-q="recent" data-i="${i}">
+        ${homeCardImg(s)}
+        <span class="mc-title">${esc(s.song)}</span>
+        <span class="mc-sub">${esc(s.choir)} · ${fmtDate(s.date)}</span>
+      </button>`;
+
+    homeEl.innerHTML = `
+      <div class="home-hello">이번 주도 은혜로 찬양해요 🙌</div>
+      <div class="sec-head week"><span class="week-badge">NEW</span> 이번 주 찬양 <span class="sec-date">${fmtDateFull(latestDate)}</span></div>
+      <button class="hero-card" data-q="week" data-i="0">
+        <span class="hero-thumb"><img loading="lazy" src="${hero.thumb}" alt="" onerror="this.src='https://i.ytimg.com/vi/${hero.id}/hqdefault.jpg'"><span class="hero-play">▶</span></span>
+        <span class="hero-body">
+          <span class="hero-title">${esc(hero.song)}</span>
+          <span class="hero-sub">${esc(hero.choir)}${hero.choir ? " · " : ""}${fmtDate(hero.date)}</span>
+        </span>
+      </button>
+      ${rest.length ? `<div class="week-list">${rest.map(weekRow).join("")}</div>` : ""}
+      ${recent.length ? `<div class="sec-head">🎵 최근 예배 찬양</div><div class="hscroll">${recent.map(miniCard).join("")}</div>` : ""}
+    `;
+
+    homeEl.querySelectorAll("[data-q]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const q = el.dataset.q === "recent" ? recent : thisWeek;
+        openPlayer(+el.dataset.i, q);
+      });
+    });
+  }
+
   // ---------- 시작 ----------
   (async function init() {
     await load();
@@ -581,10 +637,20 @@
       if (latest) { state.from = latest.slice(0, 7); state.to = latest.slice(0, 7); }
     }
 
+    renderHome();
     renderControls();
     apply();
     if (window.hideSplash) window.hideSplash();
     logVisitOnce();
+
+    // '전체 찬양 둘러보기' 접이식
+    const bt = $("#browse-toggle"), bw = $("#browse");
+    if (bt && bw) bt.addEventListener("click", () => {
+      const willOpen = bw.hidden;
+      bw.hidden = !willOpen;
+      bt.innerHTML = willOpen ? "🔼 둘러보기 접기" : "🔍 전체 찬양 둘러보기 ▾";
+      if (willOpen) requestAnimationFrame(() => bw.scrollIntoView({ behavior: "smooth", block: "start" }));
+    });
 
     // 스크롤 위치 복원(그리드 렌더 후)
     if (saved && saved.scroll) {
