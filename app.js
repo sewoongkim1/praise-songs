@@ -592,7 +592,7 @@
       <button class="mini-card" data-q="other" data-i="${i}">
         ${homeCardImg(s)}
         <span class="mc-title">${esc(s.song)}</span>
-        <span class="mc-sub">${esc(s.category)} · ${esc(s.choir)}</span>
+        <span class="mc-sub">${esc(s.category)} · ${fmtDate(s.date)}</span>
       </button>`;
 
     homeEl.innerHTML = `
