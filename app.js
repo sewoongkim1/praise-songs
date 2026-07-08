@@ -573,44 +573,41 @@
   function renderHome() {
     const homeEl = $("#home");
     if (!homeEl) return;
-    const dated = ALL.filter((s) => s.date).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const dated = ALL.filter((s) => s.date);
     if (!dated.length) { homeEl.innerHTML = ""; return; }
 
-    const latestDate = dated[0].date;
-    const thisWeek = dated.filter((s) => s.date === latestDate);
-    const recent = dated.filter((s) => s.date !== latestDate).slice(0, 12);
-    const hero = thisWeek[0];
-    const rest = thisWeek.slice(1);
+    // 이번 주 = 가장 최근 예배일의 '찬양대'만
+    const choirs = dated.filter((s) => s.category === "찬양대").slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const latestDate = choirs.length ? choirs[0].date : "";
+    const thisWeek = choirs.filter((s) => s.date === latestDate);
+    // 그 밖의 찬양(찬양대 제외) 최근
+    const others = dated.filter((s) => s.category !== "찬양대").slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 12);
 
     const weekRow = (s, i) => `
       <button class="week-row" data-q="week" data-i="${i}">
         ${homeCardImg(s)}
-        <span class="wr-body"><span class="wr-title">${esc(s.song)}</span><span class="wr-sub">${esc(s.choir)}</span></span>
+        <span class="wr-body"><span class="wr-title">${esc(s.song)}</span><span class="wr-sub">${esc(s.choir)} · ${fmtDate(s.date)}</span></span>
       </button>`;
     const miniCard = (s, i) => `
-      <button class="mini-card" data-q="recent" data-i="${i}">
+      <button class="mini-card" data-q="other" data-i="${i}">
         ${homeCardImg(s)}
         <span class="mc-title">${esc(s.song)}</span>
-        <span class="mc-sub">${esc(s.choir)} · ${fmtDate(s.date)}</span>
+        <span class="mc-sub">${esc(s.category)} · ${esc(s.choir)}</span>
       </button>`;
 
     homeEl.innerHTML = `
       <div class="home-hello">이번 주도 은혜로 찬양해요 🙌</div>
-      <div class="sec-head week"><span class="week-badge">NEW</span> 이번 주 찬양 <span class="sec-date">${fmtDateFull(latestDate)}</span></div>
-      <button class="hero-card" data-q="week" data-i="0">
-        <span class="hero-thumb"><img loading="lazy" src="${hero.thumb}" alt="" onerror="this.src='https://i.ytimg.com/vi/${hero.id}/hqdefault.jpg'"><span class="hero-play">▶</span></span>
-        <span class="hero-body">
-          <span class="hero-title">${esc(hero.song)}</span>
-          <span class="hero-sub">${esc(hero.choir)}${hero.choir ? " · " : ""}${fmtDate(hero.date)}</span>
-        </span>
-      </button>
-      ${rest.length ? `<div class="week-list">${rest.map(weekRow).join("")}</div>` : ""}
-      ${recent.length ? `<div class="sec-head">🎵 최근 예배 찬양</div><div class="hscroll">${recent.map(miniCard).join("")}</div>` : ""}
+      ${thisWeek.length ? `
+        <div class="sec-head week"><span class="week-badge">NEW</span> 이번 주 찬양 <span class="sec-date">${fmtDateFull(latestDate)}</span></div>
+        <div class="week-list">${thisWeek.map(weekRow).join("")}</div>` : ""}
+      ${others.length ? `
+        <div class="sec-head">🎵 특별·중창·찬양팀</div>
+        <div class="hscroll">${others.map(miniCard).join("")}</div>` : ""}
     `;
 
     homeEl.querySelectorAll("[data-q]").forEach((el) => {
       el.addEventListener("click", () => {
-        const q = el.dataset.q === "recent" ? recent : thisWeek;
+        const q = el.dataset.q === "other" ? others : thisWeek;
         openPlayer(+el.dataset.i, q);
       });
     });
@@ -645,9 +642,11 @@
 
     // '전체 찬양 둘러보기' 접이식
     const bt = $("#browse-toggle"), bw = $("#browse");
+    document.body.classList.remove("browse-open"); // 시작은 홈 모드(선택바 숨김)
     if (bt && bw) bt.addEventListener("click", () => {
       const willOpen = bw.hidden;
       bw.hidden = !willOpen;
+      document.body.classList.toggle("browse-open", willOpen);
       bt.innerHTML = willOpen ? "🔼 둘러보기 접기" : "🔍 전체 찬양 둘러보기 ▾";
       if (willOpen) requestAnimationFrame(() => bw.scrollIntoView({ behavior: "smooth", block: "start" }));
     });
