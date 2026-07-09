@@ -5,8 +5,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const YT_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? "";
-// 공유 프로젝트: 찬양 관리자 비번은 PRAISE_ADMIN_SECRET(없으면 ADMIN_SECRET) — 성경암송 관리자와 독립
-const ADMIN_SECRET = Deno.env.get("PRAISE_ADMIN_SECRET") ?? Deno.env.get("ADMIN_SECRET") ?? "";
+// 통합 관리자: 성경암송과 동일한 ADMIN_SECRET 사용(비번 하나로 통일)
+const ADMIN_SECRET = Deno.env.get("ADMIN_SECRET") ?? "";
 
 const db = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
@@ -73,6 +73,9 @@ Deno.serve(async (req) => {
 
   try {
     switch (action) {
+      // 관리자 비번 검증(허브 로그인용)
+      case "authCheck":
+        return json(isAdmin() ? { ok: true } : { ok: false, error: "권한 없음" }, isAdmin() ? 200 : 403);
       // ---------- 공개 ----------
       case "getSongs": {
         // PostgREST 기본 1000행 제한 → range로 전곡 페이지네이션
