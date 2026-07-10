@@ -82,21 +82,58 @@
   }
   function fmtDate(d) { return d ? d.replace(/-/g, ".").slice(2) : ""; }
 
-  // ---------- 데이터 로드 ----------
-  async function load() {
-    try {
-      const songs = await API.getSongs();
-      if (songs && songs.length) { ALL = songs.map(norm); }
-      else throw new Error("empty");
-    } catch (e) {
-      try {
-        const r = await fetch("public/praise.json?v=" + Date.now());
-        const j = await r.json();
-        ALL = (Array.isArray(j) ? j : j.songs || []).map(norm);
-      } catch (e2) { ALL = []; }
-    }
+  // ---------- 데이터 로드 (캐시 우선 · stale-while-revalidate) ----------
+  const CACHE_KEY = "praise_songs_cache_v1";
+
+  function setSongs(songs) {
+    ALL = songs.map(norm);
     BYID = {};
     ALL.forEach((s) => { BYID[s.id] = s; });
+  }
+
+  async function load() {
+    // 1) 캐시가 있으면 즉시 사용 → 초기 렌더를 네트워크가 막지 않음
+    let usedCache = false;
+    try {
+      const arr = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (Array.isArray(arr) && arr.length) { setSongs(arr); usedCache = true; }
+    } catch (e) {}
+
+    if (usedCache) {
+      refreshSongs(false);      // 백그라운드 갱신(await 안 함)
+    } else {
+      await refreshSongs(true); // 첫 방문/캐시 없음 → 네트워크 대기
+    }
+  }
+
+  // 네트워크에서 최신 곡을 받아 캐시 갱신. 데이터가 바뀌었으면 조용히 재렌더
+  async function refreshSongs(initial) {
+    let songs = null;
+    try {
+      songs = await API.getSongs();
+      if (!songs || !songs.length) throw new Error("empty");
+    } catch (e) {
+      if (!initial) return;     // 백그라운드 갱신 실패는 무시(캐시 유지)
+      try {                     // 최초인데 네트워크 실패 → 번들 폴백
+        const r = await fetch("public/praise.json?v=" + Date.now());
+        const j = await r.json();
+        songs = Array.isArray(j) ? j : (j.songs || []);
+      } catch (e2) { songs = []; }
+    }
+
+    const rawNew = JSON.stringify(songs);
+    let rawOld = null;
+    try { rawOld = localStorage.getItem(CACHE_KEY); } catch (e) {}
+    const changed = rawNew !== rawOld;
+    if (changed && songs.length) { try { localStorage.setItem(CACHE_KEY, rawNew); } catch (e) {} }
+
+    if (initial) {
+      setSongs(songs);
+    } else if (changed && songs.length) {
+      // 캐시로 이미 그린 뒤 데이터가 실제로 바뀐 경우에만 → 현재 상태 유지한 채 갱신
+      setSongs(songs);
+      try { renderHome(); renderControls(); apply(); } catch (e) {}
+    }
   }
 
   // ---------- 찬양대 목록(구분·탭에 연동) ----------
