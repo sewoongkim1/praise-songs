@@ -400,22 +400,14 @@
       <button class="sb-toggle" id="sb-toggle">${allSelected ? "☑ 전체취소" : "☐ 전체선택"}</button>
       <span class="sb-count">${sel.length}곡</span>
       <button class="sb-play" id="sb-play" ${sel.length ? "" : "disabled"}>▶ 선택 듣기</button>
-      <button class="sb-play sb-yt" id="sb-yt" ${sel.length ? "" : "disabled"} title="유튜브 앱에서 이어듣기(프리미엄이면 백그라운드 재생)">▶ 유튜브로</button>`;
+      <button class="sb-play sb-yt" id="sb-yt" ${sel.length ? "" : "disabled"} title="유튜브 앱에서 이어듣기(프리미엄이면 백그라운드 재생)">▶ 유튜브</button>`;
     $("#sb-toggle").onclick = () => {
       if (allSelected) VIEW.forEach((s) => deselected.add(s.id));   // 전체취소
       else VIEW.forEach((s) => deselected.delete(s.id));           // 전체선택
       renderGrid();
     };
     $("#sb-play").onclick = () => { const l = selectedList(); if (l.length) openPlayer(0, l); };
-    // 유튜브 임시 재생목록(watch_videos)으로 열기 — 프리미엄 사용자는 유튜브 앱에서 백그라운드로 이어듣기.
-    // 유튜브가 한 번에 최대 50곡까지 받으므로 초과분은 잘라서 연다.
-    $("#sb-yt").onclick = () => {
-      const l = selectedList();
-      if (!l.length) return;
-      if (l.length > 50) alert(`유튜브 이어듣기는 한 번에 50곡까지예요. 앞의 50곡만 열게요. (선택 ${l.length}곡)`);
-      const ids = l.slice(0, 50).map((s) => s.id).join(",");
-      window.open(`https://www.youtube.com/watch_videos?video_ids=${ids}`, "_blank", "noopener");
-    };
+    $("#sb-yt").onclick = () => openYT(selectedList());
   }
 
   // ---------- 플레이어 (YouTube IFrame API) ----------
@@ -607,6 +599,15 @@
     } catch (e) {}
   }
 
+  // 유튜브 임시 재생목록(watch_videos)으로 열기 — 프리미엄 사용자는 유튜브 앱에서 백그라운드로 이어듣기.
+  // 유튜브가 한 번에 최대 50곡까지 받으므로 초과분은 잘라서 연다.
+  function openYT(list) {
+    if (!list.length) return;
+    if (list.length > 50) alert(`유튜브 이어듣기는 한 번에 50곡까지예요. 앞의 50곡만 열게요. (선택 ${list.length}곡)`);
+    const ids = list.slice(0, 50).map((s) => s.id).join(",");
+    window.open(`https://www.youtube.com/watch_videos?video_ids=${ids}`, "_blank", "noopener");
+  }
+
   // ---------- 매거진 홈(이번 주/최근 예배 찬양) ----------
   function fmtDateFull(d) {
     if (!d) return "";
@@ -634,16 +635,21 @@
     // 그 밖의 찬양(찬양대 제외) 최근
     const others = dated.filter((s) => s.category !== "찬양대").slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 12);
 
+    const picked = (s) => homeSel.some((x) => x.id === s.id);
+    const pickBtn = (s, q, i) =>
+      `<span class="hpick ${picked(s) ? "on" : ""}" data-pq="${q}" data-pi="${i}" title="담기(선택해서 이어듣기)">${picked(s) ? "✓" : "＋"}</span>`;
     const weekRow = (s, i) => `
       <button class="week-row" data-q="week" data-i="${i}">
         ${homeCardImg(s)}
         <span class="wr-body"><span class="wr-title">${esc(s.song)}</span><span class="wr-sub">${esc(s.choir)} · ${fmtDate(s.date)}</span></span>
+        ${pickBtn(s, "week", i)}
       </button>`;
     const miniCard = (s, i) => `
       <button class="mini-card" data-q="other" data-i="${i}">
         ${homeCardImg(s)}
         <span class="mc-title">${esc(s.song)}</span>
         <span class="mc-sub">${esc(s.category)} · ${fmtDate(s.date)}</span>
+        ${pickBtn(s, "other", i)}
       </button>`;
 
     homeEl.innerHTML = `
@@ -662,6 +668,34 @@
         openPlayer(+el.dataset.i, q);
       });
     });
+    // '담기' 토글 — 카드 클릭(즉시 재생)과 분리되어 선택만 담는다
+    homeEl.querySelectorAll(".hpick").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const q = el.dataset.pq === "other" ? others : thisWeek;
+        const s = q[+el.dataset.pi];
+        const k = homeSel.findIndex((x) => x.id === s.id);
+        if (k >= 0) homeSel.splice(k, 1); else homeSel.push(s);
+        renderHome();
+      });
+    });
+    updateHomeBar();
+  }
+
+  // ---------- 홈 선택바: 담은 곡이 있으면 하단에 듣기/유튜브 버튼 ----------
+  const homeSel = []; // 담은 순서 유지
+  function updateHomeBar() {
+    let bar = $("#homebar");
+    if (!homeSel.length) { if (bar) bar.remove(); return; }
+    if (!bar) { bar = document.createElement("div"); bar.id = "homebar"; document.body.appendChild(bar); }
+    bar.innerHTML = `
+      <button class="sb-toggle" id="hb-clear">✕ 비우기</button>
+      <span class="sb-count">${homeSel.length}곡</span>
+      <button class="sb-play" id="hb-play">▶ 선택 듣기</button>
+      <button class="sb-play sb-yt" id="hb-yt" title="유튜브 앱에서 이어듣기(프리미엄이면 백그라운드 재생)">▶ 유튜브</button>`;
+    $("#hb-clear").onclick = () => { homeSel.length = 0; renderHome(); };
+    $("#hb-play").onclick = () => { if (homeSel.length) openPlayer(0, homeSel.slice()); };
+    $("#hb-yt").onclick = () => openYT(homeSel);
   }
 
   // ---------- 시작 ----------
@@ -688,7 +722,10 @@
     renderHome();
     renderControls();
     apply();
-    if (window.hideSplash) window.hideSplash();
+    { // 스플래시 최소 2초 노출(데이터가 빨리 와도 로고가 잠깐 보이게)
+      const elapsed = Date.now() - (window.__splashStart || Date.now());
+      setTimeout(() => { if (window.hideSplash) window.hideSplash(); }, Math.max(0, 2000 - elapsed));
+    }
     logVisitOnce();
 
     // '전체 찬양 둘러보기' 접이식
