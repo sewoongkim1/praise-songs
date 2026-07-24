@@ -392,6 +392,8 @@ html.dark .pl-tog { background: rgba(255,255,255,.1); color: #a9c2ec; }
   padding: 10px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
 }
 #selbar .sb-play:disabled { opacity: .4; }
+/* 유튜브로 이어듣기(프리미엄 백그라운드 재생용) — 유튜브 레드 */
+#selbar .sb-yt { background: #cc0000; padding: 10px 14px; }
 
 /* ---------- 푸터 ---------- */
 .foot { text-align: center; padding: 24px 16px 40px; font-size: 12px; color: var(--sub); }

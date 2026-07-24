@@ -399,13 +399,23 @@
     bar.innerHTML = `
       <button class="sb-toggle" id="sb-toggle">${allSelected ? "☑ 전체취소" : "☐ 전체선택"}</button>
       <span class="sb-count">${sel.length}곡</span>
-      <button class="sb-play" id="sb-play" ${sel.length ? "" : "disabled"}>▶ 선택 듣기</button>`;
+      <button class="sb-play" id="sb-play" ${sel.length ? "" : "disabled"}>▶ 선택 듣기</button>
+      <button class="sb-play sb-yt" id="sb-yt" ${sel.length ? "" : "disabled"} title="유튜브 앱에서 이어듣기(프리미엄이면 백그라운드 재생)">▶ 유튜브로</button>`;
     $("#sb-toggle").onclick = () => {
       if (allSelected) VIEW.forEach((s) => deselected.add(s.id));   // 전체취소
       else VIEW.forEach((s) => deselected.delete(s.id));           // 전체선택
       renderGrid();
     };
     $("#sb-play").onclick = () => { const l = selectedList(); if (l.length) openPlayer(0, l); };
+    // 유튜브 임시 재생목록(watch_videos)으로 열기 — 프리미엄 사용자는 유튜브 앱에서 백그라운드로 이어듣기.
+    // 유튜브가 한 번에 최대 50곡까지 받으므로 초과분은 잘라서 연다.
+    $("#sb-yt").onclick = () => {
+      const l = selectedList();
+      if (!l.length) return;
+      if (l.length > 50) alert(`유튜브 이어듣기는 한 번에 50곡까지예요. 앞의 50곡만 열게요. (선택 ${l.length}곡)`);
+      const ids = l.slice(0, 50).map((s) => s.id).join(",");
+      window.open(`https://www.youtube.com/watch_videos?video_ids=${ids}`, "_blank", "noopener");
+    };
   }
 
   // ---------- 플레이어 (YouTube IFrame API) ----------
