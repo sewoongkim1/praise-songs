@@ -1,5 +1,10 @@
 /* 고척교회 찬양 아카이브 */
 :root {
+  /* index.html의 <meta color-scheme>은 첫 로딩(밝게가 기본)만 잡아 준다.
+     .dark 는 자바스크립트가 나중에 붙이므로, 켜졌을 때 스크롤바 등 브라우저
+     기본 UI도 같이 어두워지게 CSS 쪽에서도 짝을 맞춘다(2026-09-03,
+     bible-memorize-church-app-v2 에서 삼성 인터넷 강제 반전을 고치며 함께 적용). */
+  color-scheme: light;
   --navy: #1a3a6b;
   --navy-d: #12294d;
   --gold: #c8a24a;
@@ -11,6 +16,7 @@
   --shadow: 0 2px 12px rgba(26, 58, 107, .08);
 }
 html.dark {
+  color-scheme: dark;
   --bg: #0f141c;
   --card: #182230;
   --ink: #e8edf5;

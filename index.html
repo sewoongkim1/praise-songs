@@ -15,6 +15,12 @@
   <link rel="apple-touch-icon" href="favicon.png?v=3" />
   <link rel="manifest" href="manifest.json?v=3" />
   <meta name="theme-color" content="#1a3a6b" />
+  <!-- 이 앱은 시스템 다크 모드를 따라가지 않고 🌙 버튼의 .dark 클래스로 손수 정한다
+       (style.css에 @media(prefers-color-scheme) 대응 없음). 그런데 color-scheme
+       선언이 아예 없으면 삼성 인터넷 등이 시스템이 다크일 때 페이지를 제 나름대로
+       탈색·반전시킨다 — "light"로 "다크 지원 안 함"을 분명히 해 그걸 막는다
+       (2026-09-03, bible-memorize-church-app-v2 에서 같은 증상을 고치며 함께 적용). -->
+  <meta name="color-scheme" content="light" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="찬양아카이브" />
@@ -34,7 +40,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=20260724b" />
+  <link rel="stylesheet" href="style.css?v=20260903a" />
 </head>
 <body>
   <div id="splash">
