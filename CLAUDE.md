@@ -19,6 +19,7 @@
 - `praise.json`을 수정하면 `public/praise.json`도 함께 갱신할 것.
 - 백엔드 전환/캐시 버전 관련 커밋 이력이 있으므로(`config.js`), 백엔드 URL이나 캐시 태그를 바꿀 때는 관련 파일(`config.js`, `manifest.json`, service worker 캐시 이름 등)을 전부 함께 갱신할 것.
 - 관리자 인증은 `ADMIN_SECRET` 환경변수로 통일되어 있음(Supabase Edge Function 쪽 `authCheck` 액션 참고).
+- ⚠ **한글 이름은 완성형(NFC)으로 통일**할 것. 맥에서 온 자모분리(NFD) 표기가 섞이면 같은 「시온찬양대」가 코드포인트가 달라 콤보에 두 번 뜨고 필터·검색에서 갈린다(2026-09-20 48곡). 밖에서 글자가 들어오는 자리(`praise/index.ts` 의 `nfc()`, `app.js` 의 `norm()`)에서 이미 막고 있으니 **새 유입 경로를 만들면 거기서도 정규화**한다.
 
 ## 코딩 가이드라인 (Karpathy Guidelines)
 
