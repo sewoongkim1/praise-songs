@@ -18,6 +18,11 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
+// 한글은 완성형(NFC)으로 통일한다.
+// 맥에서 온 자모분리(NFD) 이름이 섞이면 같은 「시온찬양대」가 코드포인트가 달라
+// 콤보·필터·검색에서 서로 다른 이름으로 갈린다(2026-09-20 48곡 발생).
+const nfc = (v: any) => (typeof v === "string" ? v.normalize("NFC") : v);
+
 // --- 유튜브 ID 추출 ---
 function extractYtId(input: string): string | null {
   if (!input) return null;
@@ -55,7 +60,7 @@ async function ytFetch(idOrUrl: string) {
   const th = it.snippet?.thumbnails || {};
   return {
     id,
-    song: it.snippet?.title ?? "",
+    song: nfc(it.snippet?.title ?? ""),
     thumbnail: (th.maxres || th.high || th.medium || th.default || {}).url ?? `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
     svc_date: (it.snippet?.publishedAt || "").slice(0, 10) || null,
     duration: dur.text,
@@ -117,6 +122,7 @@ Deno.serve(async (req) => {
         if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
         const s = b.song || {};
         if (!s.id) return json({ ok: false, error: "id 필요" }, 400);
+        s.song = nfc(s.song); s.choir = nfc(s.choir);
         // 순번 미지정 시 같은 구분/찬양대의 기존 순번을 상속(콤보 정렬 유지)
         let catOrd = s.category_ordering ?? null;
         let choirOrd = s.choir_ordering ?? null;
@@ -163,8 +169,8 @@ Deno.serve(async (req) => {
         if (!list.length) return json({ ok: false, error: "빈 목록" }, 400);
         const rows = list.map((s) => ({
           id: s.id,
-          song: s.song ?? "",
-          choir: s.choir ?? null,
+          song: nfc(s.song ?? ""),
+          choir: nfc(s.choir ?? null),
           category: s.category ?? null,
           svc_date: s.svc_date || s.date || null,
           duration: s.duration ?? null,
@@ -196,7 +202,7 @@ Deno.serve(async (req) => {
         // 같은 이름을 가진 모든 곡을 같은 순번으로 일괄 업데이트 → 콤보 정렬 반영
         let updated = 0;
         for (const it of items) {
-          const name = it?.name;
+          const name = nfc(it?.name);
           const ord = Number(it?.order);
           if (name == null || name === "" || !Number.isFinite(ord)) continue;
           const { error } = await db.from("songs").update({ [col]: ord }).eq(kind, name);

@@ -55,8 +55,10 @@
     const sec = r.duration_sec ?? r.durationSec ?? 0;
     return {
       id: r.id,
-      song: r.song || "",
-      choir: r.choir || "",
+      // 한글은 완성형(NFC)으로 통일 — 맥에서 온 자모분리(NFD) 이름이 섞이면
+      // 같은 「시온찬양대」가 콤보에 두 번 뜨고 필터·검색에서 갈린다(2026-09-20)
+      song: (r.song || "").normalize("NFC"),
+      choir: (r.choir || "").normalize("NFC"),
       category: r.category || "기타",
       date: r.svc_date || r.date || "",
       duration: r.duration || fmtDur(sec),
