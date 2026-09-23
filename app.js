@@ -86,6 +86,7 @@
 
   // ---------- 데이터 로드 (캐시 우선 · stale-while-revalidate) ----------
   const CACHE_KEY = "praise_songs_cache_v1";
+  let pendingRefresh = null;   // 캐시로 그린 뒤 도는 백그라운드 갱신 — 딥링크가 못 찾았을 때만 기다린다
 
   function setSongs(songs) {
     ALL = songs.map(norm);
@@ -102,7 +103,7 @@
     } catch (e) {}
 
     if (usedCache) {
-      refreshSongs(false);      // 백그라운드 갱신(await 안 함)
+      pendingRefresh = refreshSongs(false);      // 백그라운드 갱신(await 안 함)
     } else {
       await refreshSongs(true); // 첫 방문/캐시 없음 → 네트워크 대기
     }
@@ -731,11 +732,18 @@
     //   ⚠️ 큐에 **그 한 곡만** 넣는다 — updateNav 가 이전·다음을 잠그고 onEnded 도
     //      아무것도 안 해서, 끝나면 조용히 멈춘다. 더 듣고 싶으신 분은 플레이어를 닫으면
     //      바로 목록이 있다.
-    //   ⚠️ 못 찾으면 아무것도 안 한다(그냥 홈이 보인다) — 담당자가 숨겼거나 지운 곡이다.
+    //   ⚠️ 캐시가 낡아 여기서 못 찾을 수 있다(오늘의 찬양은 「한 번도 안 나온 곡」을 고르므로
+    //      갓 올라온 곡이 오늘 곡일 수 있다) — 백그라운드 갱신(pendingRefresh)이 돌고 있으면
+    //      그걸 한 번만 기다렸다가 다시 찾는다. 그래도 못 찾으면 아무것도 안 한다(그냥 홈이
+    //      보인다) — 담당자가 숨겼거나 지운 곡이다.
     try {
       const wantSong = new URLSearchParams(location.search).get("song");
       if (wantSong) {
-        const si = ALL.findIndex((s) => s.id === wantSong);
+        let si = ALL.findIndex((s) => s.id === wantSong);
+        if (si < 0 && pendingRefresh) {
+          await pendingRefresh;
+          si = ALL.findIndex((s) => s.id === wantSong);
+        }
         // openPlayer 의 첫 인자는 큐(두 번째 인자) 안에서의 인덱스다 — 큐가 [ALL[si]] 한 곡뿐이라
         // 언제나 0 이다(si 를 그대로 넘기면 대부분 범위를 벗어나 조용히 안 열린다).
         if (si >= 0) openPlayer(0, [ALL[si]]);
