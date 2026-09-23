@@ -724,6 +724,24 @@
     renderHome();
     renderControls();
     apply();
+
+    // ── 딥링크 ?song=<유튜브 id> — 성경암송 앱의 「오늘의 찬양」이 이리로 보낸다 ──
+    //   ⚠️ 전체(ALL)에서 찾는다. VIEW 는 화면 필터가 걸린 목록이라 거기서 찾으면
+    //      필터 밖의 곡을 영영 못 연다.
+    //   ⚠️ 큐에 **그 한 곡만** 넣는다 — updateNav 가 이전·다음을 잠그고 onEnded 도
+    //      아무것도 안 해서, 끝나면 조용히 멈춘다. 더 듣고 싶으신 분은 플레이어를 닫으면
+    //      바로 목록이 있다.
+    //   ⚠️ 못 찾으면 아무것도 안 한다(그냥 홈이 보인다) — 담당자가 숨겼거나 지운 곡이다.
+    try {
+      const wantSong = new URLSearchParams(location.search).get("song");
+      if (wantSong) {
+        const si = ALL.findIndex((s) => s.id === wantSong);
+        // openPlayer 의 첫 인자는 큐(두 번째 인자) 안에서의 인덱스다 — 큐가 [ALL[si]] 한 곡뿐이라
+        // 언제나 0 이다(si 를 그대로 넘기면 대부분 범위를 벗어나 조용히 안 열린다).
+        if (si >= 0) openPlayer(0, [ALL[si]]);
+      }
+    } catch (e) {}
+
     { // 스플래시 최소 2초 노출(데이터가 빨리 와도 로고가 잠깐 보이게)
       const elapsed = Date.now() - (window.__splashStart || Date.now());
       setTimeout(() => { if (window.hideSplash) window.hideSplash(); }, Math.max(0, 2000 - elapsed));
