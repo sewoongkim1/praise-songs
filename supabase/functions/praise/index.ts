@@ -69,18 +69,38 @@ async function ytFetch(idOrUrl: string) {
   };
 }
 
+// 설교·찬양 담당자(2026-09-30) — 관리자 암호가 아니면 성경암송 api 함수에 「등록된 담당자인가」만 묻는다.
+// ⚠️ 담당자 확인 코드를 여기에 복사하지 않는다(소속이 바뀐 분·합쳐진 계정을 따라가는 코드가 두 벌이 된다).
+const API_FN = `${Deno.env.get("SUPABASE_URL")}/functions/v1/api`;
+async function staffOk(b: any): Promise<boolean> {
+  if (!b.staff || typeof b.staff !== "object" || !b.secret) return false;
+  const key = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  try {
+    const r = await fetch(API_FN, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(key ? { apikey: key, Authorization: `Bearer ${key}` } : {}) },
+      body: JSON.stringify({ action: "staffVerify", role: "content", pw: b.secret, staff: b.staff }),
+    });
+    return !!(await r.json()).ok;
+  } catch { return false; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   let b: any = {};
   try { b = await req.json(); } catch { /* */ }
   const action = b.action ?? "";
   const isAdmin = () => b.secret === ADMIN_SECRET;
+  // 곡 등록·순서·조회수·사용현황은 담당자도 · 삭제·일괄 가져오기는 관리자만(deleteSong·importSongs)
+  const canEdit = async () => isAdmin() || await staffOk(b);
 
   try {
     switch (action) {
       // 관리자 비번 검증(허브 로그인용)
-      case "authCheck":
-        return json(isAdmin() ? { ok: true } : { ok: false, error: "권한 없음" }, isAdmin() ? 200 : 403);
+      case "authCheck": {
+        const ok = await canEdit();
+        return json(ok ? { ok: true, role: isAdmin() ? "admin" : "content" } : { ok: false, error: "권한 없음" }, ok ? 200 : 403);
+      }
       // ---------- 공개 ----------
       case "getSongs": {
         // PostgREST 기본 1000행 제한 → range로 전곡 페이지네이션
@@ -100,12 +120,12 @@ Deno.serve(async (req) => {
 
       // ---------- 관리자 ----------
       case "ytFetch": {
-        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        if (!(await canEdit())) return json({ ok: false, error: "권한 없음" }, 403);
         const meta = await ytFetch(b.url || b.id || "");
         return json({ ok: true, meta });
       }
       case "adminList": {
-        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        if (!(await canEdit())) return json({ ok: false, error: "권한 없음" }, 403);
         const all: any[] = [];
         const PAGE = 1000;
         for (let from = 0; ; from += PAGE) {
@@ -119,7 +139,7 @@ Deno.serve(async (req) => {
         return json({ ok: true, songs: all });
       }
       case "saveSong": {
-        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        if (!(await canEdit())) return json({ ok: false, error: "권한 없음" }, 403);
         const s = b.song || {};
         if (!s.id) return json({ ok: false, error: "id 필요" }, 400);
         s.song = nfc(s.song); s.choir = nfc(s.choir);
@@ -194,7 +214,7 @@ Deno.serve(async (req) => {
       }
 
       case "setOrdering": {
-        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        if (!(await canEdit())) return json({ ok: false, error: "권한 없음" }, 403);
         const kind = b.kind === "choir" ? "choir" : "category";
         const col = kind === "choir" ? "choir_ordering" : "category_ordering";
         const items: any[] = Array.isArray(b.items) ? b.items : [];
@@ -213,7 +233,7 @@ Deno.serve(async (req) => {
       }
 
       case "refreshViews": {
-        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        if (!(await canEdit())) return json({ ok: false, error: "권한 없음" }, 403);
         if (!YT_KEY) return json({ ok: false, error: "YOUTUBE_API_KEY 미설정" }, 500);
         const ids: string[] = (Array.isArray(b.ids) ? b.ids : [])
           .filter((x: string) => /^[a-zA-Z0-9_-]{11}$/.test(x)).slice(0, 50);
@@ -249,7 +269,7 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
       case "usageStats": {
-        if (!isAdmin()) return json({ ok: false, error: "권한 없음" }, 403);
+        if (!(await canEdit())) return json({ ok: false, error: "권한 없음" }, 403);
         const { data, error } = await db.rpc("praise_usage_stats");
         if (error) throw error;
         return json({ ok: true, stats: data });
