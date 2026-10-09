@@ -90,7 +90,12 @@ Deno.serve(async (req) => {
   let b: any = {};
   try { b = await req.json(); } catch { /* */ }
   const action = b.action ?? "";
-  const isAdmin = () => b.secret === ADMIN_SECRET;
+  // 교회 어드민이 내부 키(service_role)로 부르면 관리자로 본다(2026-10-09 찬양 아카이브 이전). church-admin 의 역할이 게이트.
+  //   ⚠️ 암호·담당자 경로는 그대로 — 내부 키는 추가일 뿐. service_role 는 이미 전권이라 추가 노출 없음.
+  const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const hdrKey = req.headers.get("x-internal-key") ?? "";
+  const internalOk = !!SRK && hdrKey.length === SRK.length && hdrKey === SRK;
+  const isAdmin = () => b.secret === ADMIN_SECRET || internalOk;
   // 곡 등록·순서·조회수·사용현황은 담당자도 · 삭제·일괄 가져오기는 관리자만(deleteSong·importSongs)
   const canEdit = async () => isAdmin() || await staffOk(b);
 
