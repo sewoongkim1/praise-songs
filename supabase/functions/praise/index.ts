@@ -1,12 +1,10 @@
 // 고척교회 찬양 아카이브 — Edge Function (Deno)
-// 배포: supabase functions deploy api --no-verify-jwt --project-ref gvmclmznpgitfurnocxo
+// 배포: supabase functions deploy praise --no-verify-jwt --project-ref ktpwthwqzgcqcrmsafdo(개발 먼저) → xnomlgydifiqiybervtf(운영 · 통합 프로젝트)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const YT_KEY = Deno.env.get("YOUTUBE_API_KEY") ?? "";
-// 통합 관리자: 성경암송과 동일한 ADMIN_SECRET 사용(비번 하나로 통일)
-const ADMIN_SECRET = Deno.env.get("ADMIN_SECRET") ?? "";
 
 const db = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
@@ -95,7 +93,10 @@ Deno.serve(async (req) => {
   const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const hdrKey = req.headers.get("x-internal-key") ?? "";
   const internalOk = !!SRK && hdrKey.length === SRK.length && hdrKey === SRK;
-  const isAdmin = () => b.secret === ADMIN_SECRET || internalOk;
+  // ⚠️ 관리자 암호 하나로 관리자가 되던 길은 2026-10-13 닫았다 — 찬양 관리는 교회 어드민(내부 키)으로 갈아탔다(성경암송 admin-praise.html 은 안내만).
+  //    암호로 오는 분은 아래 staffOk 가 성경암송 api 에 묻는다(설교·찬양 담당자 · 또는 관리자 암호 + 교회 어드민 총괄 — api 와 같은 문).
+  //    삭제·일괄 가져오기(isAdmin 만)는 이제 내부 키로만 된다.
+  const isAdmin = () => internalOk;
   // 곡 등록·순서·조회수·사용현황은 담당자도 · 삭제·일괄 가져오기는 관리자만(deleteSong·importSongs)
   const canEdit = async () => isAdmin() || await staffOk(b);
 
